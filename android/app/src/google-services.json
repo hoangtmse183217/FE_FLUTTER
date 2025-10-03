@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1007341160595",
+    "project_id": "foo-app-473809",
+    "storage_bucket": "foo-app-473809.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1007341160595:android:0bce83f1e0274e6788e566",
+        "android_client_info": {
+          "package_name": "com.example.mumiappfood"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1007341160595-mil3f96n5c05rtghopleiv3ej6a5dh42.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mumiappfood",
+            "certificate_hash": "ccaf13d67e4c5d5865b57c59bac1cb8e0cce19c5"
+          }
+        },
+        {
+          "client_id": "1007341160595-q5pqgk02dh1nugqepn0jjt2lo981no4h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB9_DHzLG4v6_NphvXULa_FQy0CPlEMODo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1007341160595-q5pqgk02dh1nugqepn0jjt2lo981no4h.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

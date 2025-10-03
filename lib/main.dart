@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:mumiappfood/core/constants/strings.dart';
+import 'package:mumiappfood/core/theme/app_theme.dart';
 import 'package:mumiappfood/routes/app_router.dart';
-import 'core/constants/strings.dart';
-import 'core/theme/app_theme.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
+
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const MyApp());
 }
 
@@ -12,20 +21,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Sử dụng MaterialApp.router để tích hợp GoRouter
     return MaterialApp.router(
-      // Tắt banner "Debug" ở góc trên bên phải
-      debugShowCheckedModeBanner: false,
-
-      // Lấy tiêu đề từ file constants để dễ quản lý
       title: AppStrings.appName,
-
-      // Áp dụng theme đã được định nghĩa trong core/theme
       theme: AppTheme.lightTheme,
-
-      // Cung cấp cấu hình router cho ứng dụng.
-      // Đây là bước quan trọng nhất để kích hoạt GoRouter.
-      // Thuộc tính 'home' không còn cần thiết nữa.
+      debugShowCheckedModeBanner: false,
       routerConfig: AppRouter.router,
     );
   }
