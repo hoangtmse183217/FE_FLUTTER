@@ -1,59 +1,76 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mumiappfood/features/auth/pages/login_page.dart';
+import 'package:mumiappfood/features/splash/pages/splash_page.dart';
 
-/// Lớp này chứa tên của các routes để tránh lỗi gõ sai chuỗi.
+import '../features/auth/pages/forgot_password_page.dart';
+import '../features/auth/pages/owner/owner_login_page.dart';
+import '../features/auth/pages/owner/owner_register_page.dart';
+import '../features/auth/pages/register_page.dart';
+
 class AppRouteNames {
-  static const String home = 'home';
+  static const String splash = 'splash';
   static const String login = 'login';
-  static const String recipeDetails = 'recipeDetails';
+  static const String register = 'register';
+  static const String ownerLogin = 'ownerLogin';
+  static const String ownerRegister = 'ownerRegister';
+  static const String forgotPassword = 'forgotPassword';
+// Bạn có thể xóa các tên route không dùng đến
+// static const String home = 'home';
+// static const String recipeDetails = 'recipeDetails';
 }
 
-/// Lớp quản lý cấu hình GoRouter cho toàn bộ ứng dụng.
 class AppRouter {
-  // Tạo một instance của GoRouter
   static final GoRouter router = GoRouter(
-    initialLocation: '/', // Route ban đầu khi mở ứng dụng
-    debugLogDiagnostics: true, // Hiển thị log debug, tắt khi release
-
-    // Danh sách tất cả các route của ứng dụng
+    initialLocation: '/splash',
+    debugLogDiagnostics: true,
     routes: <RouteBase>[
-      // Route cho màn hình chính (Home)
-      // GoRoute(
-      //   path: '/',
-      //   name: AppRouteNames.home,
-      //   builder: (BuildContext context, GoRouterState state) {
-      //     return const HomePage(); // Widget của màn hình Home
-      //   },
-      //   // Các route con của Home
-      //   routes: <RouteBase>[
-      //     // Route cho màn hình chi tiết món ăn
-      //     // Dấu ':' cho biết 'id' là một tham số (parameter)
-      //     GoRoute(
-      //       path: 'recipe/:id', // ví dụ: /recipe/123
-      //       name: AppRouteNames.recipeDetails,
-      //       builder: (BuildContext context, GoRouterState state) {
-      //         // Lấy tham số 'id' từ route
-      //         final String recipeId = state.pathParameters['id']!;
-      //         return RecipeDetailsPage(recipeId: recipeId);
-      //       },
-      //     ),
-      //   ],
-      // ),
-      //
-      // // Route cho màn hình đăng nhập
-      // GoRoute(
-      //   path: '/login',
-      //   name: AppRouteNames.login,
-      //   builder: (BuildContext context, GoRouterState state) {
-      //     return const LoginPage(); // Widget của màn hình Login
-      //   },
-      // ),
-    ],
+      GoRoute(
+        path: '/splash',
+        name: AppRouteNames.splash,
+        builder: (BuildContext context, GoRouterState state) {
+          return const SplashPage();
+        },
+      ),
 
-    // Xử lý khi route không được tìm thấy
-    errorBuilder: (context, state) => Scaffold(
-      appBar: AppBar(title: const Text('Lỗi')),
-      body: Center(child: Text('Không tìm thấy trang: ${state.error}')),
-    ),
+      GoRoute(
+        path: '/login',
+        name: AppRouteNames.login,
+        builder: (BuildContext context, GoRouterState state) {
+          return const LoginPage();
+        },
+      ),
+
+      GoRoute(
+        path: '/register',
+        name: AppRouteNames.register,
+        builder: (BuildContext context, GoRouterState state) {
+          return const RegisterPage();
+        },
+      ),
+
+      GoRoute(
+        path: '/forgot-password',
+        name: AppRouteNames.forgotPassword,
+        builder: (BuildContext context, GoRouterState state) {
+          return const ForgotPasswordPage();
+        },
+      ),
+
+      GoRoute(
+        path: '/owner-login',
+        name: AppRouteNames.ownerLogin,
+        builder: (BuildContext context, GoRouterState state) {
+          return const OwnerLoginPage();
+        },
+      ),
+      GoRoute(
+        path: '/owner-register',
+        name: AppRouteNames.ownerRegister,
+        builder: (BuildContext context, GoRouterState state) {
+          return const OwnerRegisterPage();
+        },
+      ),
+    ],
   );
 }
