@@ -20,7 +20,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   late Set<String> _selectedPriceRanges;
   late double _minRating;
 
-  final List<String> _priceOptions = const ['₫', '₫₫', '₫₫₫'];
+  final List<String> _priceOptions = const ['100.000₫', '500.000₫', '1.000.000₫'];
   // Thêm các lựa chọn khác nếu cần, ví dụ: ẩm thực
 
   @override

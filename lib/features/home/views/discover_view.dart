@@ -4,8 +4,8 @@ import 'package:mumiappfood/core/constants/app_spacing.dart';
 import 'package:mumiappfood/features/home/state/discover_cubit.dart';
 
 import 'package:mumiappfood/features/home/widgets/discover/mood_filter_chip.dart';
-import 'package:mumiappfood/features/home/widgets/home_search_bar.dart';
-import 'package:mumiappfood/features/home/widgets/restaurant_card.dart';
+import 'package:mumiappfood/features/home/widgets/discover/home_search_bar.dart';
+import 'package:mumiappfood/features/home/widgets/home/restaurant_card.dart';
 
 import '../widgets/discover/FilterBottomSheet.dart';
 

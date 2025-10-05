@@ -1,11 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
-import 'package:mumiappfood/features/home/widgets/location_display.dart';
-import 'package:mumiappfood/features/home/widgets/location_selection_sheet.dart';
-import 'package:mumiappfood/features/home/widgets/mood_selector.dart';
-import 'package:mumiappfood/features/home/widgets/restaurant_card.dart';
-import 'package:mumiappfood/features/home/widgets/section_header.dart';
+import 'package:mumiappfood/features/home/widgets/home/location_display.dart';
+import 'package:mumiappfood/features/home/widgets/home/location_selection_sheet.dart';
+import 'package:mumiappfood/features/home/widgets/home/mood_selector.dart';
+import 'package:mumiappfood/features/home/widgets/home/restaurant_card.dart';
+import 'package:mumiappfood/features/home/widgets/home/section_header.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
