@@ -19,7 +19,7 @@ class DiscoverCubit extends Cubit<DiscoverState> {
 
   Future<void> fetchInitialData() async {
     emit(DiscoverLoading());
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 100));
     emit(DiscoverLoaded(
       allMoods: _allMoods,
       selectedMoods: {},

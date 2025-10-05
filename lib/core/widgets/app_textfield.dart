@@ -1,6 +1,7 @@
 // lib/core/widgets/app_textfield.dart
 import 'package:flutter/material.dart';
 import 'package:mumiappfood/core/constants/colors.dart';
+import 'package:flutter/services.dart';
 
 class AppTextField extends StatefulWidget {
   final TextEditingController controller;
@@ -10,6 +11,7 @@ class AppTextField extends StatefulWidget {
   final IconData? prefixIcon;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
+  final List<TextInputFormatter>? inputFormatters;
 
   const AppTextField({
     Key? key,
@@ -20,6 +22,7 @@ class AppTextField extends StatefulWidget {
     this.prefixIcon,
     this.keyboardType,
     this.validator,
+    this.inputFormatters
   }) : super(key: key);
 
   @override
@@ -36,6 +39,7 @@ class _AppTextFieldState extends State<AppTextField> {
       keyboardType: widget.keyboardType,
       obscureText: widget.isPassword ? _obscureText : false,
       validator: widget.validator,
+      inputFormatters: widget.inputFormatters,
       decoration: InputDecoration(
         labelText: widget.labelText,
         hintText: widget.hintText,

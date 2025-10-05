@@ -1,9 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart'; // <-- 1. Import Bloc
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mumiappfood/core/constants/strings.dart';
 import 'package:mumiappfood/core/theme/app_theme.dart';
-import 'package:mumiappfood/features/home/state/favorites_cubit.dart'; // <-- 2. Import Cubit
+import 'package:mumiappfood/features/home/state/favorites_cubit.dart';
+import 'package:mumiappfood/features/home/state/home_cubit.dart';
 import 'package:mumiappfood/routes/app_router.dart';
 import 'firebase_options.dart';
 
@@ -20,9 +21,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 3. CUNG CẤP FAVORITESCUBIT Ở CẤP CAO NHẤT
-    return BlocProvider(
-      create: (context) => FavoritesCubit()..fetchFavorites(),
+
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => FavoritesCubit()..fetchFavorites()),
+        BlocProvider(create: (context) => HomeCubit()),
+      ],
       child: MaterialApp.router(
         title: AppStrings.appName,
         theme: AppTheme.lightTheme,
