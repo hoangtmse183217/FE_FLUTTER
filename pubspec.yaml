@@ -23,12 +23,18 @@ dependencies:
   google_sign_in: ^6.2.1
   firebase_core: ^4.1.1
   firebase_auth: ^6.1.0
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  image_picker: ^1.2.0
+  google_maps_flutter: ^2.13.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.0
 
 flutter:
   uses-material-design: true
@@ -44,3 +50,33 @@ flutter:
   #       - asset: assets/fonts/Poppins-Regular.ttf
   #       - asset: assets/fonts/Poppins-Bold.ttf
   #         weight: 700
+
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/launcher_icon/logo.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/launcher_icon/logo_foreground.png"
+  remove_alpha: false
+
+flutter_native_splash:
+  # Màu nền cho splash screen gốc, nên khớp với màu nền của SplashPage
+  color: "#FFFFFF"
+
+  # Logo sẽ hiển thị ở giữa, nên dùng logo không có nền
+  image: assets/images/branding/logo.png # <-- Dùng file PNG, không phải SVG
+
+  # (Tùy chọn) Branding image cho Android 12+
+  # branding: assets/images/branding/logo_dark.png
+
+  # Dành cho Android 12+
+  android_12:
+    color: "#FFFFFF"
+    image: assets/images/branding/logo.png
+    # icon_background_color: "#FFFFFF"
+
+  # Dành cho iOS
+  ios: true
+  # Dành cho Web
+  web: false

@@ -23,7 +23,7 @@ class LoginPage extends StatelessWidget {
           listener: (context, state) {
             if (state is LoginSuccess) {
               AppSnackbar.showSuccess(context, 'Đăng nhập thành công!');
-              // context.goNamed(AppRouteNames.home);
+              context.goNamed(AppRouteNames.home);
             } else if (state is LoginFailure) {
               AppSnackbar.showError(context, state.message);
             }
