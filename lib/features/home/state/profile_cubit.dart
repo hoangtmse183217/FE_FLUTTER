@@ -124,4 +124,11 @@ class ProfileCubit extends Cubit<ProfileState> {
       emit(currentState.copyWith(gender: newGender));
     }
   }
+
+  void updateAddress(String newAddress) {
+    if (state is ProfileLoaded) {
+      final currentState = state as ProfileLoaded;
+      emit(currentState.copyWith(address: newAddress));
+    }
+  }
 }

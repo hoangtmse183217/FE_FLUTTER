@@ -20,4 +20,7 @@ class AppColors {
   static const Color textSecondary = Color(0xFF757575); // Xám đậm
 
   static const Color border = Color(0xFFE0E0E0); // Xám nhạt
+
+  static const Color error = Color(0xFFD32F2F);   // Đỏ
+  static const Color success = Color(0xFF2E7D32); // Xanh lá đậm
 }
