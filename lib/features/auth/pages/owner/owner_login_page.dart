@@ -63,7 +63,7 @@ class OwnerLoginPage extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text("Chưa có tài khoản đối tác?"),
+                        const Text("Tài khoản đối tác?"),
                         TextButton(
                           onPressed: () => context.goNamed(AppRouteNames.ownerRegister),
                           child: const Text('Đăng ký ngay'),

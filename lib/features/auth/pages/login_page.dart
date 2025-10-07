@@ -22,7 +22,7 @@ class LoginPage extends StatelessWidget {
         body: BlocListener<LoginCubit, LoginState>(
           listener: (context, state) {
             if (state is LoginSuccess) {
-              AppSnackbar.showSuccess(context, 'Đăng nhập thành công!');
+              // AppSnackbar.showSuccess(context, 'Đăng nhập thành công!');
               context.goNamed(AppRouteNames.home);
             } else if (state is LoginFailure) {
               AppSnackbar.showError(context, state.message);

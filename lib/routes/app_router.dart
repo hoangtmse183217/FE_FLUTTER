@@ -13,6 +13,7 @@ import '../features/auth/pages/owner/owner_login_page.dart';
 import '../features/auth/pages/owner/owner_register_page.dart';
 import '../features/auth/pages/register_page.dart';
 import '../features/home/pages/home_page.dart';
+import '../features/home/pages/notifications_page.dart';
 import '../features/restaurant_details/pages/restaurant_details_page.dart';
 import '../features/splash/pages/splash_page.dart';
 
@@ -26,6 +27,7 @@ class AppRouteNames {
   static const String forgotPassword = 'forgotPassword';
   static const String home = 'home';
   static const String restaurantDetails = 'restaurantDetails';
+  static const String notifications = 'notifications';
 }
 
 class AppRouter {
@@ -68,6 +70,8 @@ class AppRouter {
       GoRoute(path: '/owner-login', name: AppRouteNames.ownerLogin, builder: (c, s) => const OwnerLoginPage()),
       GoRoute(path: '/owner-register', name: AppRouteNames.ownerRegister, builder: (c, s) => const OwnerRegisterPage()),
       GoRoute(path: '/address-input', name: 'addressInput', builder: (c, s) => const AddressInputPage()),
+      GoRoute(path: '/notifications', name: AppRouteNames.notifications, builder: (context, state) => const NotificationsPage(),
+      ),
       GoRoute(path: "/restaurant/:restaurantId", name: AppRouteNames.restaurantDetails,builder: (BuildContext context, GoRouterState state){
         final String restaurantId = state.pathParameters['restaurantId']!;
 

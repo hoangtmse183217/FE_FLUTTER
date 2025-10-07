@@ -62,7 +62,7 @@ class OwnerRegisterPage extends StatelessWidget {
                     ],
                   ),
                   AuthModeSwitcher(
-                    label: 'Bạn là người dùng thông thường?',
+                    label: 'Bạn là người dùng?',
                     actionText: 'Quay lại',
                     onPressed: () => context.goNamed(AppRouteNames.login),
                   ),
