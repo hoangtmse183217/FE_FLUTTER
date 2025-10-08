@@ -22,10 +22,12 @@ class RegisterPage extends StatelessWidget {
         body: BlocListener<RegisterCubit, RegisterState>(
           listener: (context, state) {
             if (state is RegisterSuccess) {
-              AppSnackbar.showSuccess(
-                  context, 'Đăng ký thành công! Vui lòng đăng nhập.');
-              // Điều hướng và xóa trang Register khỏi stack để không back lại được
+              // SỬA LẠI THÔNG BÁO VÀ ĐIỀU HƯỚNG
+              AppSnackbar.showSuccess(context, 'Tạo tài khoản thành công! Vui lòng đăng nhập.');
+
+              // Đưa người dùng đến trang đăng nhập của User
               context.goNamed(AppRouteNames.login);
+
             } else if (state is RegisterFailure) {
               AppSnackbar.showError(context, state.message);
             }

@@ -1,3 +1,5 @@
+// lib/features/auth/widgets/owner/owner_register_form.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
@@ -15,28 +17,25 @@ class OwnerRegisterForm extends StatefulWidget {
 
 class _OwnerRegisterFormState extends State<OwnerRegisterForm> {
   final _formKey = GlobalKey<FormState>();
-  final _restaurantNameController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _phoneController = TextEditingController();
+  final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   @override
   void dispose() {
-    _restaurantNameController.dispose();
-    _addressController.dispose();
-    _phoneController.dispose();
+    _fullNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   void _submitRegister() {
+    FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
-      // 3. Gọi hàm từ Cubit khi người dùng nhấn nút
       context.read<OwnerRegisterCubit>().register(
-        restaurantName: _restaurantNameController.text.trim(),
-        // Cần thêm các trường khác nếu logic Cubit yêu cầu
+        fullName: _fullNameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
@@ -45,51 +44,32 @@ class _OwnerRegisterFormState extends State<OwnerRegisterForm> {
 
   @override
   Widget build(BuildContext context) {
-    // 4. Lắng nghe state để cập nhật UI (nút loading)
     return BlocBuilder<OwnerRegisterCubit, OwnerRegisterState>(
       builder: (context, state) {
         final isLoading = state is OwnerRegisterLoading;
-
         return Form(
           key: _formKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('Thông tin nhà hàng', style: TextStyle(fontWeight: FontWeight.bold)),
-              vSpaceS,
               AppTextField(
-                controller: _restaurantNameController,
-                labelText: 'Tên nhà hàng',
-                hintText: 'Nhập tên nhà hàng của bạn',
-                prefixIcon: Icons.restaurant_menu,
+                controller: _fullNameController,
+                labelText: 'Họ và tên người đại diện',
+                hintText: 'Nhập họ và tên của bạn',
+                prefixIcon: Icons.person_outline,
                 validator: ValidatorUtils.notEmpty,
+                keyboardType: TextInputType.name,
+                textInputAction: TextInputAction.next,
               ),
               vSpaceM,
-              AppTextField(
-                controller: _addressController,
-                labelText: 'Địa chỉ',
-                hintText: 'Nhập địa chỉ kinh doanh',
-                prefixIcon: Icons.location_on_outlined,
-                validator: ValidatorUtils.notEmpty,
-              ),
-              vSpaceM,
-              AppTextField(
-                controller: _phoneController,
-                labelText: 'Số điện thoại',
-                hintText: 'Nhập số điện thoại liên hệ',
-                prefixIcon: Icons.phone_outlined,
-                keyboardType: TextInputType.phone,
-                validator: ValidatorUtils.notEmpty,
-              ),
-              vSpaceL,
-              const Text('Thông tin tài khoản', style: TextStyle(fontWeight: FontWeight.bold)),
-              vSpaceS,
               AppTextField(
                 controller: _emailController,
-                labelText: 'Email quản lý',
-                hintText: 'Nhập email để quản lý tài khoản',
+                labelText: 'Email kinh doanh',
+                hintText: 'Nhập email của bạn',
                 prefixIcon: Icons.email_outlined,
                 validator: ValidatorUtils.email,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
               ),
               vSpaceM,
               AppTextField(
@@ -99,15 +79,32 @@ class _OwnerRegisterFormState extends State<OwnerRegisterForm> {
                 prefixIcon: Icons.lock_outline,
                 isPassword: true,
                 validator: ValidatorUtils.password,
+                textInputAction: TextInputAction.next,
+              ),
+              vSpaceM,
+              AppTextField(
+                controller: _confirmPasswordController,
+                labelText: 'Xác nhận mật khẩu',
+                hintText: 'Nhập lại mật khẩu của bạn',
+                prefixIcon: Icons.lock_reset_outlined,
+                isPassword: true,
+                textInputAction: TextInputAction.done,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Vui lòng không để trống';
+                  }
+                  if (value != _passwordController.text) {
+                    return 'Mật khẩu không khớp.';
+                  }
+                  return null;
+                },
+                onFieldSubmitted: (_) => _submitRegister(),
               ),
               vSpaceXL,
-              SizedBox(
-                width: double.infinity,
-                child: AppButton(
-                  text: 'Gửi đơn đăng ký',
-                  isLoading: isLoading,
-                  onPressed: _submitRegister,
-                ),
+              AppButton(
+                text: 'Tạo tài khoản Đối tác',
+                isLoading: isLoading,
+                onPressed: _submitRegister,
               ),
             ],
           ),
