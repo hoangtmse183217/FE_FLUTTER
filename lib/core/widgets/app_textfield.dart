@@ -12,6 +12,9 @@ class AppTextField extends StatefulWidget {
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
   final List<TextInputFormatter>? inputFormatters;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
+  final int? maxLines;
 
   const AppTextField({
     Key? key,
@@ -22,7 +25,10 @@ class AppTextField extends StatefulWidget {
     this.prefixIcon,
     this.keyboardType,
     this.validator,
-    this.inputFormatters
+    this.inputFormatters,
+    this.textInputAction, // <-- Thêm vào constructor
+    this.onFieldSubmitted,
+    this.maxLines = 1,
   }) : super(key: key);
 
   @override
@@ -40,6 +46,9 @@ class _AppTextFieldState extends State<AppTextField> {
       obscureText: widget.isPassword ? _obscureText : false,
       validator: widget.validator,
       inputFormatters: widget.inputFormatters,
+      textInputAction: widget.textInputAction,
+      onFieldSubmitted: widget.onFieldSubmitted,
+      maxLines: widget.isPassword ? 1 : widget.maxLines,
       decoration: InputDecoration(
         labelText: widget.labelText,
         hintText: widget.hintText,

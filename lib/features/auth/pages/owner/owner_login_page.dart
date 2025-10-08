@@ -4,31 +4,26 @@ import 'package:go_router/go_router.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
 import 'package:mumiappfood/core/widgets/app_snackbar.dart';
 import 'package:mumiappfood/features/auth/state/owner/owner_login_cubit.dart';
+import 'package:mumiappfood/features/auth/widgets/auth_mode_switcher.dart';
 import 'package:mumiappfood/features/auth/widgets/owner/owner_login_form.dart';
 import 'package:mumiappfood/routes/app_router.dart';
-
-import '../../widgets/auth_mode_switcher.dart';
 
 class OwnerLoginPage extends StatelessWidget {
   const OwnerLoginPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // 1. Cung cấp Cubit cho cây widget
     return BlocProvider(
       create: (context) => OwnerLoginCubit(),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Partner Portal'),
         ),
-        // 2. Lắng nghe các thay đổi state để thực hiện hành động
+        // SỬA LẠI: Chỉ cần lắng nghe lỗi để hiển thị SnackBar
         body: BlocListener<OwnerLoginCubit, OwnerLoginState>(
           listener: (context, state) {
-            if (state is OwnerLoginSuccess) {
-              AppSnackbar.showSuccess(context, 'Đăng nhập đối tác thành công!');
-              // TODO: Điều hướng đến trang dashboard của chủ nhà hàng
-              // Ví dụ: context.goNamed(AppRouteNames.ownerDashboard);
-            } else if (state is OwnerLoginFailure) {
+            // Chúng ta không cần xử lý state Success nữa vì GoRouter đã làm điều đó
+            if (state is OwnerLoginFailure) {
               AppSnackbar.showError(context, state.message);
             }
           },
@@ -58,12 +53,13 @@ class OwnerLoginPage extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                     vSpaceXL,
+                    // OwnerLoginForm sẽ được rebuild bởi BlocBuilder bên trong nó
                     const OwnerLoginForm(),
                     vSpaceL,
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text("Tài khoản đối tác?"),
+                        const Text("Chưa có tài khoản đối tác?"),
                         TextButton(
                           onPressed: () => context.goNamed(AppRouteNames.ownerRegister),
                           child: const Text('Đăng ký ngay'),

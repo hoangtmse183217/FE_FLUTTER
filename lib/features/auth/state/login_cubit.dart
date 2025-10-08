@@ -1,11 +1,9 @@
-// lib/features/auth/state/login_cubit.dart
-
 import 'package:bloc/bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mumiappfood/core/utils/logger.dart';
-
 
 part 'login_state.dart';
 
@@ -13,18 +11,31 @@ class LoginCubit extends Cubit<LoginState> {
   LoginCubit() : super(LoginInitial());
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Xử lý logic đăng nhập bằng Email/Password với Firebase
+  /// Xử lý logic đăng nhập bằng Email/Password với Firebase và kiểm tra vai trò
   Future<void> login({required String email, required String password}) async {
     emit(LoginLoading());
     try {
-      await _auth.signInWithEmailAndPassword(
+      final userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      emit(LoginSuccess());
+
+      final user = userCredential.user;
+      if (user == null) throw Exception('Đăng nhập thất bại.');
+
+      // --- SỬA LẠI: KIỂM TRA VAI TRÒ TỪ DISPLAYNAME ---
+      if (user.displayName == null || !user.displayName!.startsWith('[OWNER]')) {
+        AppLogger.success('Đăng nhập User thành công: ${user.email}');
+        emit(LoginSuccess());
+      } else {
+        await _auth.signOut();
+        AppLogger.warning('Tài khoản ${user.email} là Owner, không thể đăng nhập.');
+        emit(LoginFailure(message: 'Tài khoản này không phải là tài khoản người dùng.'));
+      }
+
     } on FirebaseAuthException catch (e) {
-      // Bắt các lỗi cụ thể từ Firebase
       String message = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
       if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
         message = 'Email hoặc mật khẩu không đúng.';
@@ -39,28 +50,23 @@ class LoginCubit extends Cubit<LoginState> {
     }
   }
 
-  /// Xử lý logic đăng nhập bằng Google
+  /// Xử lý logic đăng nhập bằng Google và kiểm tra/tạo vai trò
   Future<void> loginWithGoogle() async {
+    // Logic này vốn đã không dùng Firestore nên có thể giữ nguyên
     emit(LoginLoading());
     try {
-      // 1. Bắt đầu quá trình đăng nhập Google
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) {
-        emit(LoginInitial()); // Người dùng hủy
+        emit(LoginInitial());
         return;
       }
-
-      // 2. Lấy thông tin xác thực từ tài khoản Google
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final OAuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-
-      // 3. Đăng nhập vào Firebase bằng thông tin xác thực đó
       await _auth.signInWithCredential(credential);
-
-      AppLogger.success('Đăng nhập Google thành công: ${googleUser.email}');
+      // Đăng nhập Google mặc định là User, không cần kiểm tra vai trò
       emit(LoginSuccess());
 
     } catch (error, stackTrace) {
