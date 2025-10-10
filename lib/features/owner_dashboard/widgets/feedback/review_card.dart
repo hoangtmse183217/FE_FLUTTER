@@ -69,20 +69,6 @@ class ReviewCard extends StatelessWidget {
               comment,
               style: TextStyle(color: Colors.grey[800], height: 1.4),
             ),
-            const Divider(height: kSpacingL),
-            // --- Phần Phản hồi (Tùy chọn) ---
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: () {
-                    // TODO: Mở dialog để Partner trả lời bình luận
-                  },
-                  icon: const Icon(Icons.reply_outlined, size: 18),
-                  label: const Text('Phản hồi'),
-                )
-              ],
-            )
           ],
         ),
       ),

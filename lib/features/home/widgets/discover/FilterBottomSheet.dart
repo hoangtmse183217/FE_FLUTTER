@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
+import 'package:mumiappfood/core/constants/colors.dart';
 import 'package:mumiappfood/core/widgets/app_button.dart';
 
 class FilterBottomSheet extends StatefulWidget {
@@ -67,6 +68,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             spacing: kSpacingS,
             children: _priceOptions.map((price) {
               return ChoiceChip(
+                selectedColor: AppColors.primary,
                 label: Text(price),
                 selected: _selectedPriceRanges.contains(price),
                 onSelected: (_) => _onPriceChipSelected(price),
@@ -86,6 +88,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             ],
           ),
           Slider(
+            thumbColor: AppColors.primary,
+            activeColor: AppColors.primary,
+            inactiveColor: Colors.grey[300],
             value: _minRating,
             min: 0,
             max: 5,
