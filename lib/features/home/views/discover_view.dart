@@ -7,6 +7,7 @@ import 'package:mumiappfood/features/home/widgets/discover/mood_filter_chip.dart
 import 'package:mumiappfood/features/home/widgets/discover/home_search_bar.dart';
 import 'package:mumiappfood/features/home/widgets/home/restaurant_card.dart';
 
+import '../../../core/constants/colors.dart';
 import '../widgets/discover/FilterBottomSheet.dart';
 
 class DiscoverView extends StatelessWidget {
@@ -54,7 +55,7 @@ class DiscoverView extends StatelessWidget {
         body: BlocBuilder<DiscoverCubit, DiscoverState>(
           builder: (context, state) {
             if (state is DiscoverLoading || state is DiscoverInitial) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator(color: AppColors.primary));
             }
 
             if (state is DiscoverError) {
@@ -132,7 +133,7 @@ class DiscoverView extends StatelessWidget {
                         if (state.isLoading)
                           Container(
                             color: Colors.white.withOpacity(0.5),
-                            child: const Center(child: CircularProgressIndicator()),
+                            child: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
                           ),
                       ],
                     ),

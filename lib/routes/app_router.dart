@@ -23,6 +23,7 @@ import 'package:mumiappfood/features/owner_dashboard/pages/restaurant_images_pag
 import 'package:mumiappfood/features/splash/pages/splash_page.dart';
 
 import '../features/home/pages/notifications_page.dart';
+import '../features/post_details/pages/post_details_page.dart';
 
 class AppRouteNames {
   static const String splash = 'splash';
@@ -44,6 +45,8 @@ class AppRouteNames {
   static const String addRestaurant = 'addRestaurant';
   static const String editRestaurant = 'editRestaurant';
   static const String restaurantImages = 'restaurantImages';
+
+  static const String postDetails = 'postDetails';
 }
 
 class AppRouter {
@@ -106,11 +109,11 @@ class AppRouter {
               return RestaurantDetailsPage(restaurantId: id);
             },
           ),
-          // GoRoute(
-          //   path: 'notifications',
-          //   name: AppRouteNames.notifications,
-          //   builder: (context, state) => const NotificationsPage(),
-          // ),
+          GoRoute(
+            path: 'notifications',
+            name: AppRouteNames.notifications,
+            builder: (context, state) => const NotificationsPage(),
+          ),
         ],
       ),
 
@@ -140,6 +143,14 @@ class AppRouter {
         builder: (context, state) {
           final restaurantId = state.pathParameters['restaurantId']!;
           return RestaurantImagesPage(restaurantId: restaurantId);
+        },
+      ),
+      GoRoute(
+        path: '/post/:postId',
+        name: AppRouteNames.postDetails,
+        builder: (context, state) {
+          final String postId = state.pathParameters['postId']!;
+          return PostDetailsPage(postId: postId);
         },
       ),
 
