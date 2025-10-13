@@ -23,6 +23,7 @@ import 'package:mumiappfood/features/owner_dashboard/pages/restaurant_images_pag
 import 'package:mumiappfood/features/splash/pages/splash_page.dart';
 
 import '../features/home/pages/notifications_page.dart';
+import '../features/owner_dashboard/pages/add_edit_post_page.dart';
 import '../features/post_details/pages/post_details_page.dart';
 
 class AppRouteNames {
@@ -46,7 +47,10 @@ class AppRouteNames {
   static const String editRestaurant = 'editRestaurant';
   static const String restaurantImages = 'restaurantImages';
 
+  
   static const String postDetails = 'postDetails';
+  static const String addPost = 'addPost';
+  static const String editPost = 'editPost';
 }
 
 class AppRouter {
@@ -151,6 +155,19 @@ class AppRouter {
         builder: (context, state) {
           final String postId = state.pathParameters['postId']!;
           return PostDetailsPage(postId: postId);
+        },
+      ),
+      GoRoute(
+        path: '/owner/post/add',
+        name: AppRouteNames.addPost,
+        builder: (context, state) => const AddEditPostPage(postId: null),
+      ),
+      GoRoute(
+        path: '/owner/post/edit/:postId',
+        name: AppRouteNames.editPost,
+        builder: (context, state) {
+          final postId = state.pathParameters['postId']!;
+          return AddEditPostPage(postId: postId);
         },
       ),
 

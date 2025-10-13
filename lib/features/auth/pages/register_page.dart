@@ -79,7 +79,7 @@ class RegisterPage extends StatelessWidget {
                       ],
                     ),
                     AuthModeSwitcher(
-                      label: 'Đăng ký với tư cách chủ nhà hàng?',
+                      label: 'Chủ nhà hàng?',
                       actionText: 'Đăng ký tại đây',
                       onPressed: () => context.goNamed(AppRouteNames.ownerRegister),
                     ),
