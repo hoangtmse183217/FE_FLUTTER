@@ -8,7 +8,7 @@ import 'package:mumiappfood/features/home/widgets/discover/home_search_bar.dart'
 import 'package:mumiappfood/features/home/widgets/home/restaurant_card.dart';
 
 import '../../../core/constants/colors.dart';
-import '../widgets/discover/FilterBottomSheet.dart';
+import '../widgets/discover/filter_bottom_sheet.dart';
 
 class DiscoverView extends StatelessWidget {
   const DiscoverView({super.key});
