@@ -8,12 +8,8 @@ class SplashCubit extends Cubit<SplashState> {
   /// Bắt đầu quá trình khởi tạo của ứng dụng
   Future<void> initializeApp() async {
     // Đợi 2.5 giây để hiển thị logo, tạo cảm giác ứng dụng đang tải
-    await Future.delayed(const Duration(milliseconds: 2500));
+    await Future.delayed(const Duration(seconds: 2));
 
-    // ====================================================================
-    // NƠI ĐỂ THỰC HIỆN LOGIC KHỞI TẠO CỦA BẠN
-    // Ví dụ: kiểm tra token, tải cấu hình từ server, v.v.
-    // ====================================================================
     bool isLoggedIn = await _checkAuthenticationStatus();
 
     if (isLoggedIn) {
@@ -21,7 +17,7 @@ class SplashCubit extends Cubit<SplashState> {
       emit(SplashLoaded(destinationRoute: '/')); // '/' là HomePage
     } else {
       // Nếu chưa, điều hướng đến trang đăng nhập
-      emit(SplashLoaded(destinationRoute: '/login'));
+      emit(SplashLoaded(destinationRoute: '/role-selection'));
     }
   }
 

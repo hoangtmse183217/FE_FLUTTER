@@ -14,7 +14,7 @@ class LoginCubit extends Cubit<LoginState> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   /// Xử lý logic đăng nhập bằng Email/Password với Firebase và kiểm tra vai trò
-  Future<void> login({required String email, required String password}) async {
+  Future<void> login({required String email, required String password, required bool rememberMe}) async {
     emit(LoginLoading());
     try {
       final userCredential = await _auth.signInWithEmailAndPassword(
