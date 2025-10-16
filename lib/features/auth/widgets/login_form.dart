@@ -8,7 +8,7 @@ import 'package:mumiappfood/core/widgets/app_textfield.dart';
 import 'package:mumiappfood/features/auth/state/login_cubit.dart';
 import 'package:mumiappfood/features/auth/widgets/or_divider.dart';
 import 'package:mumiappfood/features/auth/widgets/social_login_button.dart';
-
+import '../../../core/constants/colors.dart';
 import '../../../routes/app_router.dart';
 
 class LoginForm extends StatefulWidget {
@@ -23,6 +23,8 @@ class _LoginFormState extends State<LoginForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  bool _rememberMe = false; // 🟢 Trạng thái "Ghi nhớ đăng nhập"
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -35,6 +37,7 @@ class _LoginFormState extends State<LoginForm> {
       context.read<LoginCubit>().login(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
+        rememberMe: _rememberMe, // 🟢 Truyền vào Cubit (nếu muốn xử lý sau)
       );
     }
   }
@@ -44,11 +47,12 @@ class _LoginFormState extends State<LoginForm> {
     return BlocBuilder<LoginCubit, LoginState>(
       builder: (context, state) {
         final isLoading = state is LoginLoading;
+
         return Form(
           key: _formKey,
           child: Column(
             children: [
-              // --- FORM INPUT ---
+              // --- EMAIL ---
               AppTextField(
                 controller: _emailController,
                 labelText: 'Email',
@@ -57,6 +61,8 @@ class _LoginFormState extends State<LoginForm> {
                 validator: ValidatorUtils.email,
               ),
               vSpaceM,
+
+              // --- PASSWORD ---
               AppTextField(
                 controller: _passwordController,
                 labelText: 'Mật khẩu',
@@ -66,23 +72,53 @@ class _LoginFormState extends State<LoginForm> {
                 validator: ValidatorUtils.password,
               ),
 
-              // --- FORGOT PASSWORD LINK ---
-              // Đặt ngay dưới ô mật khẩu, căn lề phải
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  // THAY ĐỔI Ở ĐÂY
-                  onPressed: isLoading
-                      ? null
-                      : () => context.goNamed(AppRouteNames.forgotPassword),
-                  child: const Text('Quên mật khẩu?'),
+              // --- REMEMBER ME + FORGOT PASSWORD ---
+              Padding(
+                padding: const EdgeInsets.only(top: kSpacingS),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // ✅ Checkbox “Ghi nhớ đăng nhập”
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _rememberMe,
+                          activeColor: AppColors.primary,
+                          onChanged: (value) {
+                            setState(() => _rememberMe = value ?? false);
+                          },
+                        ),
+                        Text(
+                          'Ghi nhớ đăng nhập',
+                          style: TextStyle(
+                            color: AppColors.textSecondary.withOpacity(0.9),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // 🔗 Forgot password
+                    TextButton(
+                      onPressed: isLoading
+                          ? null
+                          : () => context.goNamed(AppRouteNames.forgotPassword),
+                      child: const Text(
+                        'Quên mật khẩu?',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.primary,
+                        ),
+
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
-              vSpaceM, // Tạo khoảng cách rõ ràng trước nút chính
+              vSpaceM,
 
-              // --- PRIMARY ACTION BUTTON ---
-              // Nút chính được đặt ở đây, nổi bật và rõ ràng
+              // --- PRIMARY BUTTON ---
               SizedBox(
                 width: double.infinity,
                 child: AppButton(

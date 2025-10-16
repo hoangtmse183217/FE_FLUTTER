@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
+import 'package:mumiappfood/core/constants/colors.dart';
 import 'package:mumiappfood/core/utils/validator_utils.dart';
 import 'package:mumiappfood/core/widgets/app_button.dart';
 import 'package:mumiappfood/core/widgets/app_textfield.dart';
@@ -17,6 +18,7 @@ class _OwnerLoginFormState extends State<OwnerLoginForm> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _rememberMe = false;
 
   @override
   void dispose() {
@@ -27,7 +29,7 @@ class _OwnerLoginFormState extends State<OwnerLoginForm> {
 
   void _submitLogin() {
     if (_formKey.currentState!.validate()) {
-      // 3. Gọi hàm từ Cubit khi người dùng nhấn nút
+      FocusScope.of(context).unfocus();
       context.read<OwnerLoginCubit>().login(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
@@ -37,7 +39,6 @@ class _OwnerLoginFormState extends State<OwnerLoginForm> {
 
   @override
   Widget build(BuildContext context) {
-    // 4. Lắng nghe state để cập nhật UI (nút loading)
     return BlocBuilder<OwnerLoginCubit, OwnerLoginState>(
       builder: (context, state) {
         final isLoading = state is OwnerLoginLoading;
@@ -46,6 +47,7 @@ class _OwnerLoginFormState extends State<OwnerLoginForm> {
           key: _formKey,
           child: Column(
             children: [
+              // --- EMAIL ---
               AppTextField(
                 controller: _emailController,
                 labelText: 'Email Kinh doanh',
@@ -54,6 +56,8 @@ class _OwnerLoginFormState extends State<OwnerLoginForm> {
                 validator: ValidatorUtils.email,
               ),
               vSpaceM,
+
+              // --- PASSWORD ---
               AppTextField(
                 controller: _passwordController,
                 labelText: 'Mật khẩu',
@@ -62,14 +66,44 @@ class _OwnerLoginFormState extends State<OwnerLoginForm> {
                 isPassword: true,
                 validator: ValidatorUtils.password,
               ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: isLoading ? null : () {},
-                  child: const Text('Quên mật khẩu?'),
+
+              // --- Remember & Forgot password ---
+              Padding(
+                padding: const EdgeInsets.only(top: 6.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // ✅ Remember me checkbox
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _rememberMe,
+                          activeColor: AppColors.primary,
+                          onChanged: (val) {
+                            setState(() => _rememberMe = val ?? false);
+                          },
+                        ),
+                        const Text('Ghi nhớ đăng nhập'),
+                      ],
+                    ),
+                    // 🔗 Forgot password
+                    TextButton(
+                      onPressed: isLoading ? null : () {},
+                      child: const Text(
+                        'Quên mật khẩu?',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+
               vSpaceM,
+
+              // --- LOGIN BUTTON ---
               SizedBox(
                 width: double.infinity,
                 child: AppButton(
