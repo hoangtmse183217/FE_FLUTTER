@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
+import '../../../core/constants/colors.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../routes/app_router.dart';
 import '../state/forgot_password_cubit.dart';
@@ -52,7 +53,7 @@ class ForgotPasswordPage extends StatelessWidget {
                       children: [
                         TextButton(
                           onPressed: () => context.goNamed(AppRouteNames.login),
-                          child: const Text('Quay lại Đăng nhập'),
+                          child: const Text('Quay lại Đăng nhập', style: TextStyle(color: AppColors.primary)),
                         ),
                       ],
                     ),

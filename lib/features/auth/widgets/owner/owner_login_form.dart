@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
 import 'package:mumiappfood/core/constants/colors.dart';
 import 'package:mumiappfood/core/utils/validator_utils.dart';
@@ -18,7 +19,6 @@ class _OwnerLoginFormState extends State<OwnerLoginForm> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _rememberMe = false;
 
   @override
   void dispose() {
@@ -31,9 +31,9 @@ class _OwnerLoginFormState extends State<OwnerLoginForm> {
     if (_formKey.currentState!.validate()) {
       FocusScope.of(context).unfocus();
       context.read<OwnerLoginCubit>().login(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
     }
   }
 
@@ -67,37 +67,20 @@ class _OwnerLoginFormState extends State<OwnerLoginForm> {
                 validator: ValidatorUtils.password,
               ),
 
-              // --- Remember & Forgot password ---
-              Padding(
-                padding: const EdgeInsets.only(top: 6.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // ✅ Remember me checkbox
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: _rememberMe,
-                          activeColor: AppColors.primary,
-                          onChanged: (val) {
-                            setState(() => _rememberMe = val ?? false);
-                          },
-                        ),
-                        const Text('Ghi nhớ đăng nhập'),
-                      ],
+              // --- Forgot password ---
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: isLoading
+                      ? null
+                      : () => context.goNamed('forgotPassword'),
+                  child: const Text(
+                    'Quên mật khẩu?',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.primary,
                     ),
-                    // 🔗 Forgot password
-                    TextButton(
-                      onPressed: isLoading ? null : () {},
-                      child: const Text(
-                        'Quên mật khẩu?',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
 

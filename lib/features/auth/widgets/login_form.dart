@@ -23,8 +23,6 @@ class _LoginFormState extends State<LoginForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  bool _rememberMe = false; // 🟢 Trạng thái "Ghi nhớ đăng nhập"
-
   @override
   void dispose() {
     _emailController.dispose();
@@ -35,10 +33,9 @@ class _LoginFormState extends State<LoginForm> {
   void _submitLogin() {
     if (_formKey.currentState!.validate()) {
       context.read<LoginCubit>().login(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-        rememberMe: _rememberMe, // 🟢 Truyền vào Cubit (nếu muốn xử lý sau)
-      );
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
     }
   }
 
@@ -72,47 +69,20 @@ class _LoginFormState extends State<LoginForm> {
                 validator: ValidatorUtils.password,
               ),
 
-              // --- REMEMBER ME + FORGOT PASSWORD ---
-              Padding(
-                padding: const EdgeInsets.only(top: kSpacingS),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // ✅ Checkbox “Ghi nhớ đăng nhập”
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: _rememberMe,
-                          activeColor: AppColors.primary,
-                          onChanged: (value) {
-                            setState(() => _rememberMe = value ?? false);
-                          },
-                        ),
-                        Text(
-                          'Ghi nhớ đăng nhập',
-                          style: TextStyle(
-                            color: AppColors.textSecondary.withOpacity(0.9),
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
+              // --- FORGOT PASSWORD ---
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: isLoading
+                      ? null
+                      : () => context.goNamed(AppRouteNames.forgotPassword),
+                  child: const Text(
+                    'Quên mật khẩu?',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.primary,
                     ),
-
-                    // 🔗 Forgot password
-                    TextButton(
-                      onPressed: isLoading
-                          ? null
-                          : () => context.goNamed(AppRouteNames.forgotPassword),
-                      child: const Text(
-                        'Quên mật khẩu?',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.primary,
-                        ),
-
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
 
@@ -133,7 +103,9 @@ class _LoginFormState extends State<LoginForm> {
               SocialLoginButton(
                 iconPath: 'assets/images/icon/google.svg',
                 text: 'Đăng nhập với Google',
-                onPressed: isLoading ? () {} : () => context.read<LoginCubit>().loginWithGoogle(),
+                onPressed: isLoading
+                    ? () {}
+                    : () => context.read<LoginCubit>().loginWithGoogle(),
               ),
             ],
           ),
