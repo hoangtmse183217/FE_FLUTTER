@@ -6,7 +6,6 @@ import 'package:mumiappfood/core/constants/app_spacing.dart';
 import 'package:mumiappfood/core/constants/colors.dart';
 import 'package:mumiappfood/core/widgets/app_snackbar.dart';
 import 'package:mumiappfood/features/auth/state/owner/owner_login_cubit.dart';
-import 'package:mumiappfood/features/auth/widgets/auth_mode_switcher.dart';
 import 'package:mumiappfood/features/auth/widgets/owner/owner_login_form.dart';
 import 'package:mumiappfood/routes/app_router.dart';
 
@@ -71,20 +70,22 @@ class OwnerLoginPage extends StatelessWidget {
                               .textTheme
                               .headlineSmall
                               ?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                          ),
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                              ),
                         ),
                         vSpaceS,
                         Text(
                           'Quản lý nhà hàng, thực đơn và đơn hàng của bạn.',
                           textAlign: TextAlign.center,
-                          style:
-                          Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textSecondary
-                                .withOpacity(0.85),
-                            height: 1.4,
-                          ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                color:
+                                    AppColors.textSecondary.withOpacity(0.85),
+                                height: 1.4,
+                              ),
                         ),
                         vSpaceXL,
 
@@ -114,13 +115,12 @@ class OwnerLoginPage extends StatelessWidget {
                             Text(
                               'Chưa có tài khoản?',
                               style: TextStyle(
-                                color:
-                                AppColors.textSecondary.withOpacity(0.9),
+                                color: AppColors.textSecondary.withOpacity(0.9),
                               ),
                             ),
                             TextButton(
-                              onPressed: () => context
-                                  .goNamed(AppRouteNames.ownerRegister),
+                              onPressed: () =>
+                                  context.goNamed(AppRouteNames.ownerRegister),
                               child: const Text(
                                 'Đăng ký ngay',
                                 style: TextStyle(

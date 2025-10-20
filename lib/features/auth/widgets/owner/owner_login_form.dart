@@ -18,7 +18,6 @@ class _OwnerLoginFormState extends State<OwnerLoginForm> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _rememberMe = false;
 
   @override
   void dispose() {
@@ -31,9 +30,9 @@ class _OwnerLoginFormState extends State<OwnerLoginForm> {
     if (_formKey.currentState!.validate()) {
       FocusScope.of(context).unfocus();
       context.read<OwnerLoginCubit>().login(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
     }
   }
 
@@ -67,25 +66,12 @@ class _OwnerLoginFormState extends State<OwnerLoginForm> {
                 validator: ValidatorUtils.password,
               ),
 
-              // --- Remember & Forgot password ---
+              // --- FORGOT PASSWORD ---
               Padding(
                 padding: const EdgeInsets.only(top: 6.0),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    // ✅ Remember me checkbox
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: _rememberMe,
-                          activeColor: AppColors.primary,
-                          onChanged: (val) {
-                            setState(() => _rememberMe = val ?? false);
-                          },
-                        ),
-                        const Text('Ghi nhớ đăng nhập'),
-                      ],
-                    ),
                     // 🔗 Forgot password
                     TextButton(
                       onPressed: isLoading ? null : () {},

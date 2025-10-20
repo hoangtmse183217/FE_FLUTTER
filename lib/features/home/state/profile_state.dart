@@ -1,16 +1,21 @@
+// lib/features/home/state/profile_state.dart
+
 part of 'profile_cubit.dart';
 
 @immutable
 abstract class ProfileState {}
 
-// Trạng thái ban đầu, khi đang tải dữ liệu
 class ProfileInitial extends ProfileState {}
 class ProfileLoading extends ProfileState {}
 
-// Trạng thái khi đã tải dữ liệu thành công
 class ProfileLoaded extends ProfileState {
-  // Dữ liệu gốc từ Firebase để so sánh
-  final User user;
+  // --- THAY ĐỔI Ở ĐÂY ---
+  // 1. Thay thế 'User user' bằng 'Map<String, dynamic> userData'
+  // userData sẽ chứa thông tin được giải mã từ JWT token.
+  final Map<String, dynamic> userData;
+
+  // 2. Thêm trường 'photoURL' để lưu trữ URL avatar
+  final String? photoURL;
 
   // Dữ liệu người dùng đang chỉnh sửa, sẽ được hiển thị trên UI
   final String displayName;
@@ -20,10 +25,11 @@ class ProfileLoaded extends ProfileState {
   final XFile? newAvatarFile; // File ảnh mới người dùng đã chọn
 
   // Cờ trạng thái để quản lý UI
-  final bool isSaving; // Cho biết có đang trong quá trình lưu hay không
+  final bool isSaving;
 
   ProfileLoaded({
-    required this.user,
+    required this.userData,
+    this.photoURL,
     required this.displayName,
     required this.phoneNumber,
     required this.address,
@@ -32,8 +38,9 @@ class ProfileLoaded extends ProfileState {
     this.isSaving = false,
   });
 
-  // Hàm copyWith cực kỳ quan trọng để tạo ra state mới mà không thay đổi state cũ
+  // Hàm copyWith để tạo ra state mới mà không thay đổi state cũ
   ProfileLoaded copyWith({
+    String? photoURL,
     String? displayName,
     String? phoneNumber,
     String? address,
@@ -42,7 +49,8 @@ class ProfileLoaded extends ProfileState {
     bool? isSaving,
   }) {
     return ProfileLoaded(
-      user: user, // user gốc không thay đổi
+      userData: userData, // Dữ liệu gốc từ token không thay đổi
+      photoURL: photoURL ?? this.photoURL,
       displayName: displayName ?? this.displayName,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       address: address ?? this.address,
@@ -53,11 +61,9 @@ class ProfileLoaded extends ProfileState {
   }
 }
 
-// Trạng thái khi có lỗi xảy ra (tải hoặc lưu)
 class ProfileError extends ProfileState {
   final String message;
   ProfileError({required this.message});
 }
 
-// Trạng thái đặc biệt để báo cho UI biết rằng đã lưu thành công
 class ProfileSaveSuccess extends ProfileState {}

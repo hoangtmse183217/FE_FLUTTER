@@ -1,134 +1,123 @@
+// lib/features/home/state/profile_cubit.dart
+
 import 'package:bloc/bloc.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mumiappfood/core/utils/logger.dart';
+import 'package:mumiappfood/features/profile/data/repositories/profile_repository.dart';
 
 part 'profile_state.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
+  final ProfileRepository _profileRepository = ProfileRepository();
+
   ProfileCubit() : super(ProfileInitial());
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  // TODO: Khởi tạo Firebase Storage và Firestore ở đây
-  // final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  // final FirebaseStorage _storage = FirebaseStorage.instance;
-
-  /// 1. Tải dữ liệu người dùng ban đầu
   Future<void> loadProfile() async {
     emit(ProfileLoading());
     try {
-      final User? currentUser = _auth.currentUser;
-      if (currentUser == null) {
-        throw Exception('Người dùng chưa đăng nhập.');
-      }
+      final profileData = await _profileRepository.getMyProfile();
 
-      // TODO: Tải dữ liệu bổ sung (SĐT, địa chỉ...) từ Firestore
-      // final profileDoc = await _firestore.collection('profiles').doc(currentUser.uid).get();
-      // final profileData = profileDoc.data();
+      // --- LOGIC XỬ LÝ 'profile' AN TOÀN HƠN ---
+      Map<String, dynamic>? profileDetails;
+      // Kiểm tra xem 'profile' có tồn tại và có phải là một Map hay không
+      if (profileData['profile'] is Map<String, dynamic>) {
+        profileDetails = profileData['profile'] as Map<String, dynamic>;
+      }
 
       emit(ProfileLoaded(
-        user: currentUser,
-        displayName: currentUser.displayName ?? 'Người dùng',
-        // Lấy dữ liệu từ Firestore hoặc dùng giá trị mặc định
-        phoneNumber: /* profileData?['phoneNumber'] ?? */ 'Chưa cập nhật',
-        address: /* profileData?['address'] ?? */ 'Chưa cập nhật',
-        gender: /* profileData?['gender'] ?? */ 'Chưa cập nhật',
+        userData: profileData,
+        displayName: profileData['fullname'] ?? 'Người dùng',
+
+        // Sử dụng profileDetails đã được kiểm tra an toàn
+        photoURL: profileDetails?['avatar'],
+        phoneNumber: profileDetails?['phoneNumber'] ?? 'Chưa cập nhật',
+        address: profileDetails?['address'] ?? 'Chưa cập nhật',
+        gender: profileDetails?['gender'] ?? 'Chưa cập nhật',
       ));
-    } catch (e) {
-      emit(ProfileError(message: 'Không thể tải hồ sơ người dùng.'));
+
+    } catch (e, stackTrace) { // Thêm stackTrace để debug
+      AppLogger.error('Lỗi tải hồ sơ trong Cubit: $e', e, stackTrace);
+      emit(ProfileError(message: 'Không thể tải hồ sơ người dùng. Vui lòng thử lại.'));
     }
   }
 
-  /// 2. Cập nhật tên hiển thị trong state (UI-only)
+  // --- Các hàm update UI-only (giữ nguyên không đổi) ---
   void updateDisplayName(String newName) {
     if (state is ProfileLoaded) {
-      final currentState = state as ProfileLoaded;
-      // Phát ra một state mới với tên đã được cập nhật
-      emit(currentState.copyWith(displayName: newName));
+      emit((state as ProfileLoaded).copyWith(displayName: newName));
     }
   }
 
-  /// 3. Cập nhật file avatar mới trong state (UI-only)
   void updateAvatar(XFile newAvatar) {
     if (state is ProfileLoaded) {
-      final currentState = state as ProfileLoaded;
-      emit(currentState.copyWith(newAvatarFile: newAvatar));
+      emit((state as ProfileLoaded).copyWith(newAvatarFile: newAvatar));
     }
   }
 
-  // TODO: Tạo các hàm tương tự cho updatePhoneNumber, updateAddress...
-
-  /// 4. Lưu tất cả thay đổi lên Firebase
-  Future<void> saveProfile() async {
-    if (state is! ProfileLoaded) return;
-
-    final currentState = state as ProfileLoaded;
-    emit(currentState.copyWith(isSaving: true)); // Báo cho UI biết đang lưu
-
-    try {
-      final User? currentUser = _auth.currentUser;
-      if (currentUser == null) throw Exception('Người dùng không hợp lệ.');
-
-      // --- Logic Lưu ---
-
-      // a. Cập nhật tên hiển thị trong FirebaseAuth
-      if (currentUser.displayName != currentState.displayName) {
-        await currentUser.updateDisplayName(currentState.displayName);
-      }
-
-      // b. Tải avatar mới lên Firebase Storage (nếu có)
-      String? newPhotoURL;
-      if (currentState.newAvatarFile != null) {
-        // Đây là logic giả lập, bạn cần thay thế bằng code tải file thật
-        // final ref = _storage.ref('avatars/${currentUser.uid}');
-        // await ref.putFile(File(currentState.newAvatarFile!.path));
-        // newPhotoURL = await ref.getDownloadURL();
-        await Future.delayed(const Duration(seconds: 1)); // Giả lập tải lên
-        newPhotoURL = 'https://via.placeholder.com/150'; // URL giả
-      }
-
-      // c. Cập nhật URL ảnh mới trong FirebaseAuth
-      if (newPhotoURL != null && currentUser.photoURL != newPhotoURL) {
-        await currentUser.updatePhotoURL(newPhotoURL);
-      }
-
-      // d. Lưu các thông tin còn lại vào Firestore
-      // await _firestore.collection('profiles').doc(currentUser.uid).set({
-      //   'phoneNumber': currentState.phoneNumber,
-      //   'address': currentState.address,
-      //   'gender': currentState.gender,
-      //   'updated_at': FieldValue.serverTimestamp(),
-      // }, SetOptions(merge: true));
-
-      emit(ProfileSaveSuccess()); // Báo lưu thành công
-      // Tải lại dữ liệu mới nhất sau khi lưu
-      await loadProfile();
-
-    } catch (e) {
-      emit(ProfileError(message: 'Lưu hồ sơ thất bại. Vui lòng thử lại.'));
-      // Quay lại trạng thái Loaded với isSaving = false
-      emit(currentState.copyWith(isSaving: false));
-    }
-  }
-
-  void updatePhoneNumber(String newPhoneNumber) {
+  void updatePhoneNumber(String newPhone) {
     if (state is ProfileLoaded) {
-      final currentState = state as ProfileLoaded;
-      emit(currentState.copyWith(phoneNumber: newPhoneNumber));
-    }
-  }
-
-  void updateGender(String newGender) {
-    if (state is ProfileLoaded) {
-      final currentState = state as ProfileLoaded;
-      emit(currentState.copyWith(gender: newGender));
+      emit((state as ProfileLoaded).copyWith(phoneNumber: newPhone));
     }
   }
 
   void updateAddress(String newAddress) {
     if (state is ProfileLoaded) {
-      final currentState = state as ProfileLoaded;
-      emit(currentState.copyWith(address: newAddress));
+      emit((state as ProfileLoaded).copyWith(address: newAddress));
+    }
+  }
+
+  void updateGender(String newGender) {
+    if (state is ProfileLoaded) {
+      emit((state as ProfileLoaded).copyWith(gender: newGender));
+    }
+  }
+
+  /// Gửi tất cả các thay đổi lên server
+  Future<void> saveProfile() async {
+    if (state is! ProfileLoaded) return;
+    final currentState = state as ProfileLoaded;
+    emit(currentState.copyWith(isSaving: true));
+
+    try {
+      // --- LOGIC MỚI: CHỈ GỬI CÁC TRƯỜNG CÓ DỮ LIỆU HỢP LỆ ---
+      final Map<String, dynamic> dataToUpdate = {
+        'fullname': currentState.displayName,
+      };
+
+      // Chỉ thêm các trường vào Map nếu chúng không phải là giá trị mặc định
+      if (currentState.phoneNumber.isNotEmpty && currentState.phoneNumber != 'Chưa cập nhật') {
+        dataToUpdate['phoneNumber'] = currentState.phoneNumber;
+      }
+
+      if (currentState.address.isNotEmpty && currentState.address != 'Chưa cập nhật') {
+        dataToUpdate['address'] = currentState.address;
+      }
+
+      if (currentState.gender.isNotEmpty && currentState.gender != 'Chưa cập nhật') {
+        String _mapGenderToApiValue(String uiGender) {
+          if (uiGender == 'Nam') return 'Male';
+          if (uiGender == 'Nữ') return 'Female';
+          return 'Other'; // Hoặc ném lỗi nếu muốn
+        }
+        dataToUpdate['gender'] = _mapGenderToApiValue(currentState.gender);
+      }
+
+      // TODO: Xử lý upload avatar nếu có
+
+      // GỌI API VỚI DỮ LIỆU ĐÃ ĐƯỢC LỌC
+      await _profileRepository.updateMyProfile(dataToUpdate);
+
+      AppLogger.success('Lưu hồ sơ thành công.');
+      emit(ProfileSaveSuccess());
+
+      // Tải lại dữ liệu mới nhất
+      await loadProfile();
+
+    } catch (e) {
+      AppLogger.error('Lỗi lưu hồ sơ: $e');
+      emit(ProfileError(message: 'Lưu hồ sơ thất bại: ${e.toString().replaceFirst('Exception: ', '')}'));
+      emit(currentState.copyWith(isSaving: false));
     }
   }
 }

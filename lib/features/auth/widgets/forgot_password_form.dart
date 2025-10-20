@@ -7,7 +7,13 @@ import 'package:mumiappfood/core/widgets/app_textfield.dart';
 import 'package:mumiappfood/features/auth/state/forgot_password_cubit.dart';
 
 class ForgotPasswordForm extends StatefulWidget {
-  const ForgotPasswordForm({super.key});
+  // 1. THÊM THAM SỐ ĐỂ NHẬN CONTROLLER
+  final TextEditingController emailController;
+
+  const ForgotPasswordForm({
+    super.key,
+    required this.emailController, // Bắt buộc phải có
+  });
 
   @override
   State<ForgotPasswordForm> createState() => _ForgotPasswordFormState();
@@ -15,18 +21,20 @@ class ForgotPasswordForm extends StatefulWidget {
 
 class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  // 2. KHÔNG TẠO CONTROLLER Ở ĐÂY NỮA
+  // final _emailController = TextEditingController();
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   _emailController.dispose(); // Không dispose ở đây vì nó được quản lý bởi cha
+  //   super.dispose();
+  // }
 
   void _submitRequest() {
     if (_formKey.currentState!.validate()) {
       context.read<ForgotPasswordCubit>().requestPasswordReset(
-        email: _emailController.text.trim(),
+        // 3. SỬ DỤNG CONTROLLER TỪ WIDGET CHA
+        email: widget.emailController.text.trim(),
       );
     }
   }
@@ -41,7 +49,8 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
           child: Column(
             children: [
               AppTextField(
-                controller: _emailController,
+                // 4. TRUYỀN CONTROLLER VÀO TEXTFIELD
+                controller: widget.emailController,
                 labelText: 'Email',
                 hintText: 'Nhập email đã đăng ký của bạn',
                 prefixIcon: Icons.email_outlined,
