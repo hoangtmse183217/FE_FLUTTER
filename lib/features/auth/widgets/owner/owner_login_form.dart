@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
 import 'package:mumiappfood/core/constants/colors.dart';
 import 'package:mumiappfood/core/utils/validator_utils.dart';
@@ -67,20 +66,24 @@ class _OwnerLoginFormState extends State<OwnerLoginForm> {
                 validator: ValidatorUtils.password,
               ),
 
-              // --- Forgot password ---
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: isLoading
-                      ? null
-                      : () => context.goNamed('forgotPassword'),
-                  child: const Text(
-                    'Quên mật khẩu?',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.primary,
+              // --- FORGOT PASSWORD ---
+              Padding(
+                padding: const EdgeInsets.only(top: 6.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    // 🔗 Forgot password
+                    TextButton(
+                      onPressed: isLoading ? null : () {},
+                      child: const Text(
+                        'Quên mật khẩu?',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.primary,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
 

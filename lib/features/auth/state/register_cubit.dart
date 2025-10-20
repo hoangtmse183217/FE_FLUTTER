@@ -1,52 +1,46 @@
 import 'package:bloc/bloc.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mumiappfood/core/utils/logger.dart';
+import 'package:mumiappfood/features/auth/data/providers/auth_api_provider.dart'; // Import lớp Exception
+import 'package:mumiappfood/features/auth/data/repositories/auth_repository.dart';
 
 part 'register_state.dart';
 
 class RegisterCubit extends Cubit<RegisterState> {
   RegisterCubit() : super(RegisterInitial());
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  // 1. Khởi tạo Repository thay vì FirebaseAuth
+  final AuthRepository _authRepository = AuthRepository();
 
   Future<void> register({
     required String fullName,
     required String email,
     required String password,
   }) async {
-    // Thêm biện pháp phòng vệ
     if (isClosed) return;
     emit(RegisterLoading());
 
     try {
-      final UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+      // 2. Gọi hàm register từ Repository
+      await _authRepository.register(
+        fullname: fullName,
         email: email,
         password: password,
       );
 
-      final User? user = userCredential.user;
-      if (user == null) throw Exception("Không thể tạo người dùng.");
-
-      await user.updateDisplayName(fullName);
-
-      // --- THAY ĐỔI QUAN TRỌNG Ở ĐÂY ---
-      // Đăng xuất ngay sau khi tạo tài khoản để ngăn redirect tự động
-      await _auth.signOut();
-
-      AppLogger.success('Đã tạo tài khoản User thành công: ${user.email}. Vui lòng đăng nhập.');
+      AppLogger.success('Yêu cầu đăng ký tài khoản User thành công cho: $email');
 
       if (isClosed) return;
+      // 3. Emit Success. Logic đăng xuất không còn cần thiết vì API không tự động đăng nhập.
       emit(RegisterSuccess());
 
-    } on FirebaseAuthException catch (e) {
+    } on RegistrationException catch (e) {
+      // 4. Bắt lỗi RegistrationException cụ thể từ ApiProvider
       if (isClosed) return;
-      String message = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
-      if (e.code == 'weak-password') message = 'Mật khẩu quá yếu.';
-      if (e.code == 'email-already-in-use') message = 'Email này đã được sử dụng.';
-      if (e.code == 'invalid-email') message = 'Email không hợp lệ.';
-      emit(RegisterFailure(message: message));
+      AppLogger.error('Lỗi đăng ký API: ${e.message}');
+      emit(RegisterFailure(message: e.message));
     } catch (e) {
+      // Bắt các lỗi không mong muốn khác
       if (isClosed) return;
       AppLogger.error('Lỗi không xác định khi đăng ký User: $e');
       emit(RegisterFailure(message: 'Đã có lỗi xảy ra. Vui lòng thử lại.'));

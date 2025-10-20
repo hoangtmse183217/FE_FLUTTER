@@ -1,7 +1,10 @@
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+
+// Service quản lý token (API riêng của bạn)
+import 'package:mumiappfood/core/services/auth_service.dart';
 
 // Auth & Role Selection Pages
 import 'package:mumiappfood/features/auth/pages/forgot_password_page.dart';
@@ -15,6 +18,7 @@ import 'package:mumiappfood/features/role_selection/pages/role_selection_page.da
 import 'package:mumiappfood/features/home/pages/home_page.dart';
 import 'package:mumiappfood/features/restaurant_details/pages/restaurant_details_page.dart';
 import 'package:mumiappfood/features/post_details/pages/post_details_page.dart';
+import 'package:mumiappfood/features/home/pages/notifications_page.dart';
 
 // Owner Flow Pages
 import 'package:mumiappfood/features/owner_dashboard/pages/owner_dashboard_page.dart';
@@ -25,8 +29,11 @@ import 'package:mumiappfood/features/owner_dashboard/pages/add_edit_post_page.da
 // General Pages
 import 'package:mumiappfood/features/splash/pages/splash_page.dart';
 
-import '../features/home/pages/notifications_page.dart';
+import '../features/auth/pages/reset_password_page.dart';
 
+/// ---------------------------------------------------------------------------
+/// Tên route (giữ nguyên)
+/// ---------------------------------------------------------------------------
 class AppRouteNames {
   static const String splash = 'splash';
   static const String roleSelection = 'roleSelection';
@@ -37,6 +44,7 @@ class AppRouteNames {
   static const String forgotPassword = 'forgotPassword';
   static const String ownerLogin = 'ownerLogin';
   static const String ownerRegister = 'ownerRegister';
+  static const String resetPassword = 'resetPassword';
 
   // User Flow
   static const String home = 'home';
@@ -51,43 +59,61 @@ class AppRouteNames {
   static const String restaurantImages = 'restaurantImages';
   static const String addPost = 'addPost';
   static const String editPost = 'editPost';
+
 }
 
+/// ---------------------------------------------------------------------------
+/// Router chính - DÙNG JWT Token
+/// ---------------------------------------------------------------------------
 class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: '/splash',
     debugLogDiagnostics: true,
-    refreshListenable: GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges()),
 
-    redirect: (BuildContext context, GoRouterState state) {
-      final user = FirebaseAuth.instance.currentUser;
-      final bool isLoggedIn = user != null;
+    // Không còn dùng FirebaseAuth nữa — redirect dựa trên token API
+    redirect: (BuildContext context, GoRouterState state) async {
+      // Lấy token từ AuthService (bạn phải cài đặt hàm này)
+      final accessToken = await AuthService.getAccessToken();
 
-      // Các trang công khai mà ai cũng có thể truy cập
-      final publicPages = ['/splash', '/role-selection', '/login', '/register', '/forgot-password', '/owner-login', '/owner-register'];
+      final bool isLoggedIn =
+          accessToken != null && !JwtDecoder.isExpired(accessToken);
+
+      // Các trang public ai cũng truy cập được
+      final publicPages = [
+        '/splash',
+        '/role-selection',
+        '/login',
+        '/register',
+        '/forgot-password',
+        '/owner-login',
+        '/owner-register',
+        '/reset-password',
+      ];
+
       final isGoingToPublicPage = publicPages.contains(state.matchedLocation);
 
-      // Kịch bản 1: Đã đăng nhập
+      // Nếu đã đăng nhập
       if (isLoggedIn) {
-        final String role = (user.displayName != null && user.displayName!.startsWith('[OWNER]')) ? 'owner' : 'user';
+        final Map<String, dynamic> decodedToken = JwtDecoder.decode(accessToken!);
+        final String role = decodedToken['role'] ?? 'user';
 
-        // Nếu đã đăng nhập và đang ở một trang công khai (ví dụ: vừa mở app, từ splash) -> chuyển hướng vào trong
         if (isGoingToPublicPage) {
+          // Chủ quán -> dashboard, người dùng -> home
           return role == 'owner' ? '/owner/dashboard' : '/';
         }
-      }
-      // Kịch bản 2: Chưa đăng nhập
-      else {
-        // Nếu chưa đăng nhập và cố gắng vào một trang cần đăng nhập -> đưa về trang chọn vai trò
+      } else {
+        // Nếu chưa đăng nhập mà cố vào trang private -> đưa về role selection
         if (!isGoingToPublicPage) {
           return '/role-selection';
         }
       }
 
-      // Các trường hợp khác (ví dụ: đã đăng nhập và đang ở trang home) -> không làm gì cả
       return null;
     },
 
+    /// -----------------------------------------------------------------------
+    /// Tất cả route giữ nguyên logic cũ
+    /// -----------------------------------------------------------------------
     routes: <RouteBase>[
       // Public Routes
       GoRoute(path: '/splash', name: AppRouteNames.splash, builder: (c, s) => const SplashPage()),
@@ -170,20 +196,17 @@ class AppRouter {
           return AddEditPostPage(postId: id);
         },
       ),
+      GoRoute(
+        path: '/reset-password',
+        name: AppRouteNames.resetPassword,
+        builder: (context, state) {
+          // Nhận Map từ extra
+          final Map<String, String> data = state.extra as Map<String, String>;
+          final String email = data['email']!;
+          final String token = data['token']!;
+          return ResetPasswordPage(email: email, token: token);
+        },
+      ),
     ],
   );
-}
-
-// Lớp GoRouterRefreshStream
-class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(Stream<dynamic> stream) {
-    notifyListeners();
-    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
-  }
-  late final StreamSubscription<dynamic> _subscription;
-  @override
-  void dispose() {
-    _subscription.cancel();
-    super.dispose();
-  }
 }

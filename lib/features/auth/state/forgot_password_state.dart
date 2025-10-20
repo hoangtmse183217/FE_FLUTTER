@@ -10,7 +10,8 @@ class ForgotPasswordLoading extends ForgotPasswordState {}
 // Trạng thái thành công, chứa thông báo để hiển thị cho người dùng
 class ForgotPasswordSuccess extends ForgotPasswordState {
   final String message;
-  ForgotPasswordSuccess({required this.message});
+  final String resetToken;
+  ForgotPasswordSuccess({required this.message, required this.resetToken});
 }
 
 class ForgotPasswordFailure extends ForgotPasswordState {

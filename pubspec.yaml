@@ -30,6 +30,9 @@ dependencies:
   google_places_flutter: ^2.1.1
   cloud_firestore: ^6.0.2
   timeago: ^3.7.1
+  http: ^1.5.0
+  flutter_secure_storage: ^9.2.4
+  jwt_decoder: ^2.0.1
 
 dev_dependencies:
   flutter_test:

@@ -1,21 +1,55 @@
 // lib/features/owner_dashboard/views/owner_profile_view.dart
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
+import 'package:mumiappfood/core/services/auth_service.dart';
+import 'package:mumiappfood/core/widgets/app_snackbar.dart';
 import 'package:mumiappfood/features/home/state/home_cubit.dart';
 import 'package:mumiappfood/features/home/widgets/profile/profile_menu_item.dart';
+import 'package:mumiappfood/routes/app_router.dart';
 
-class OwnerProfileView extends StatelessWidget {
+class OwnerProfileView extends StatefulWidget {
   const OwnerProfileView({super.key});
 
   @override
+  State<OwnerProfileView> createState() => _OwnerProfileViewState();
+}
+
+class _OwnerProfileViewState extends State<OwnerProfileView> {
+  // Sử dụng StatefulWidget để tải dữ liệu một lần
+  Map<String, dynamic>? _userData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserDataFromToken();
+  }
+
+  Future<void> _loadUserDataFromToken() async {
+    final token = await AuthService.getAccessToken();
+    if (token != null && !JwtDecoder.isExpired(token)) {
+      setState(() {
+        _userData = JwtDecoder.decode(token);
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Lấy thông tin người dùng hiện tại
-    final user = FirebaseAuth.instance.currentUser;
-    // Lấy ký tự đầu của tên để làm fallback cho avatar
-    final fallbackText = user?.displayName?.substring(1, 8).toUpperCase() ?? 'P';
+    if (_userData == null) {
+      // Hiển thị loading trong khi chờ giải mã token
+      return Scaffold(
+        appBar: AppBar(title: const Text('Hồ sơ Đối tác')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final String displayName = _userData!['fullname']?.replaceFirst('[OWNER] ', '') ?? 'Đối tác';
+    final String email = _userData!['email'] ?? 'Không có email';
+    final String fallbackText = displayName.isNotEmpty ? displayName.substring(0, 1).toUpperCase() : 'P';
 
     return Scaffold(
       appBar: AppBar(
@@ -28,17 +62,16 @@ class OwnerProfileView extends StatelessWidget {
             // Thông tin avatar và tên
             CircleAvatar(
               radius: 50,
-              backgroundImage: user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
-              child: user?.photoURL == null ? Text(fallbackText, style: const TextStyle(fontSize: 40)) : null,
+              // TODO: Thay thế bằng photoURL từ API profile
+              child: Text(fallbackText, style: const TextStyle(fontSize: 40)),
             ),
             vSpaceM,
             Text(
-              // Loại bỏ prefix [OWNER] khi hiển thị
-              user?.displayName?.replaceFirst('[OWNER] ', '') ?? 'Đối tác',
+              displayName,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             Text(
-              user?.email ?? 'Không có email',
+              email,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             vSpaceXL,
@@ -65,15 +98,25 @@ class OwnerProfileView extends StatelessWidget {
             ),
             vSpaceL,
 
-            // Nút đăng xuất
-            Card(
-              child: ProfileMenuItem(
-                icon: Icons.logout,
-                title: 'Đăng xuất',
-                onTap: () {
-                  context.read<HomeCubit>().logout();
-                },
-                isEditable: false,
+            // --- PHẦN ĐĂNG XUẤT ĐÃ ĐƯỢC CẬP NHẬT ---
+            BlocListener<HomeCubit, HomeState>(
+              listener: (context, state) {
+                if (state is HomeLogoutSuccess) {
+                  context.goNamed(AppRouteNames.roleSelection);
+                } else if (state is HomeError) {
+                  AppSnackbar.showError(context, state.message);
+                }
+              },
+              child: Card(
+                child: ProfileMenuItem(
+                  icon: Icons.logout,
+                  title: 'Đăng xuất',
+                  onTap: () {
+                    // Chỉ cần gọi hàm logout, BlocListener sẽ lo phần còn lại.
+                    context.read<HomeCubit>().logout();
+                  },
+                  isEditable: false,
+                ),
               ),
             ),
           ],

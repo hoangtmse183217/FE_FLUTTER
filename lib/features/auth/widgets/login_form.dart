@@ -70,19 +70,25 @@ class _LoginFormState extends State<LoginForm> {
               ),
 
               // --- FORGOT PASSWORD ---
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: isLoading
-                      ? null
-                      : () => context.goNamed(AppRouteNames.forgotPassword),
-                  child: const Text(
-                    'Quên mật khẩu?',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.primary,
+              Padding(
+                padding: const EdgeInsets.only(top: kSpacingS),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    // 🔗 Forgot password
+                    TextButton(
+                      onPressed: isLoading
+                          ? null
+                          : () => context.goNamed(AppRouteNames.forgotPassword),
+                      child: const Text(
+                        'Quên mật khẩu?',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.primary,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
 
