@@ -2,29 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
 import 'package:mumiappfood/features/home/state/discover_cubit.dart';
-
 import 'package:mumiappfood/features/home/widgets/discover/mood_filter_chip.dart';
 import 'package:mumiappfood/features/home/widgets/discover/home_search_bar.dart';
 import 'package:mumiappfood/features/home/widgets/home/restaurant_card.dart';
 
 import '../../../core/constants/colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../widgets/discover/filter_bottom_sheet.dart';
 
 class DiscoverView extends StatelessWidget {
   const DiscoverView({super.key});
 
-  // Tách hàm hiển thị bottom sheet ra cho gọn gàng và dễ đọc.
   void _showFilterSheet(BuildContext context, DiscoverLoaded currentState) async {
-    // 1. Hiển thị BottomSheet và chờ kết quả trả về.
-    // Kết quả là một Map chứa các giá trị filter người dùng đã chọn.
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
-      isScrollControlled: true, // Cho phép bottom sheet có chiều cao linh hoạt
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) {
-        // Truyền các giá trị filter hiện tại vào BottomSheet
         return FilterBottomSheet(
           initialPriceRanges: currentState.selectedPriceRanges,
           initialMinRating: currentState.minRating,
@@ -32,7 +28,6 @@ class DiscoverView extends StatelessWidget {
       },
     );
 
-    // 2. Nếu người dùng nhấn "Áp dụng" (result không null), gọi Cubit để xử lý
     if (result != null && context.mounted) {
       context.read<DiscoverCubit>().applyFilters(
         priceRanges: result['priceRanges'] as Set<String>,
@@ -43,12 +38,13 @@ class DiscoverView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return BlocProvider(
       create: (context) => DiscoverCubit()..fetchInitialData(),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Khám phá'),
-          // Bỏ elevation để liền mạch với body
+          title: Text(localizations.discover),
           elevation: 0,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         ),
@@ -66,7 +62,6 @@ class DiscoverView extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- THANH TÌM KIẾM VÀ BỘ LỌC ---
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: kSpacingM),
                     child: HomeSearchBar(
@@ -74,12 +69,10 @@ class DiscoverView extends StatelessWidget {
                     ),
                   ),
                   vSpaceL,
-
-                  // --- BỘ LỌC MOOD ---
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: kSpacingM),
                     child: Text(
-                      'Tâm trạng của bạn là...',
+                      localizations.whatsYourMood,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ),
@@ -89,14 +82,14 @@ class DiscoverView extends StatelessWidget {
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: kSpacingM),
-                      children: state.allMoods.map((mood) {
+                      children: state.allMoods.map((moodKey) { // Now expecting keys
                         return Padding(
                           padding: const EdgeInsets.only(right: kSpacingS),
                           child: MoodFilterChip(
-                            mood: mood,
-                            isSelected: state.selectedMoods.contains(mood),
-                            onSelected: (selectedMood) {
-                              context.read<DiscoverCubit>().filterByMood(selectedMood);
+                            mood: moodKey, // Pass the key
+                            isSelected: state.selectedMoods.contains(moodKey),
+                            onSelected: (selectedMoodKey) {
+                              context.read<DiscoverCubit>().filterByMood(selectedMoodKey);
                             },
                           ),
                         );
@@ -104,14 +97,12 @@ class DiscoverView extends StatelessWidget {
                     ),
                   ),
                   const Divider(height: kSpacingL),
-
-                  // --- DANH SÁCH KẾT QUẢ ---
                   Expanded(
                     child: Stack(
                       children: [
                         if (state.restaurants.isEmpty && !state.isLoading)
-                          const Center(
-                            child: Text('Không tìm thấy nhà hàng nào phù hợp.'),
+                          Center(
+                            child: Text(localizations.noRestaurantsFound),
                           ),
                         ListView.separated(
                           padding: const EdgeInsets.all(kSpacingM),
@@ -123,16 +114,15 @@ class DiscoverView extends StatelessWidget {
                               restaurantId: restaurant['id'] ?? 'unknown-id',
                               name: restaurant['name'],
                               imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500',
-                              cuisine: 'Ẩm thực đa dạng',
+                              cuisine: localizations.diverseCuisine,
                               rating: 4.5, // Dữ liệu giả
-                              moods: List<String>.from(restaurant['moods']),
+                              moods: List<String>.from(restaurant['moods']), // Assuming these are keys now
                             );
                           },
                         ),
-                        // Lớp phủ loading khi đang lọc
                         if (state.isLoading)
                           Container(
-                            color: Colors.white.withOpacity(0.5),
+                            color: Colors.black.withOpacity(0.1),
                             child: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
                           ),
                       ],
@@ -142,7 +132,7 @@ class DiscoverView extends StatelessWidget {
               );
             }
 
-            return const SizedBox.shrink(); // Trường hợp state không xác định
+            return const SizedBox.shrink();
           },
         ),
       ),

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
 
+import '../../../../l10n/app_localizations.dart';
+
 class EmptyFavorites extends StatelessWidget {
   const EmptyFavorites({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(kSpacingL),
@@ -19,13 +23,13 @@ class EmptyFavorites extends StatelessWidget {
             ),
             vSpaceM,
             Text(
-              'Danh sách trống',
+              localizations.emptyFavoritesTitle,
               style: Theme.of(context).textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
             vSpaceS,
             Text(
-              'Hãy khám phá và nhấn vào biểu tượng trái tim để lưu lại những nhà hàng bạn yêu thích nhé!',
+              localizations.emptyFavoritesSubtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Colors.grey[600],
               ),

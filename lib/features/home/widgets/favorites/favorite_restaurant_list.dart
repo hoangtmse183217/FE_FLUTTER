@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
-
+import '../../../../l10n/app_localizations.dart';
 import '../home/restaurant_card.dart';
 
 class FavoriteRestaurantList extends StatelessWidget {
@@ -13,6 +13,8 @@ class FavoriteRestaurantList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return ListView.separated(
       padding: const EdgeInsets.all(kSpacingM),
       itemCount: favoriteRestaurants.length,
@@ -25,7 +27,7 @@ class FavoriteRestaurantList extends StatelessWidget {
           name: restaurant['name'],
           // Thay thế bằng imageUrl thật từ dữ liệu của bạn
           imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500',
-          cuisine: 'Ẩm thực đa dạng',
+          cuisine: localizations.diverseCuisine,
           rating: 4.5,
           moods: const [],
         );

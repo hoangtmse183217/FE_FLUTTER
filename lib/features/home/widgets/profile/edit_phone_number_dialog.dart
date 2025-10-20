@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/widgets/app_textfield.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class EditPhoneNumberDialog extends StatefulWidget {
   final String initialValue;
@@ -37,6 +38,8 @@ class _EditPhoneNumberDialogState extends State<EditPhoneNumberDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return AlertDialog(
       backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
@@ -44,13 +47,13 @@ class _EditPhoneNumberDialogState extends State<EditPhoneNumberDialog> {
       ),
       titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
       contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-      title: const Row(
+      title: Row(
         children: [
-          Icon(AppIcons.phone, color: AppColors.primary),
-          SizedBox(width: 8),
+          const Icon(AppIcons.phone, color: AppColors.primary),
+          const SizedBox(width: 8),
           Text(
-            'Thay đổi số điện thoại',
-            style: TextStyle(
+            localizations.changePhoneNumber,
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
               fontSize: 18,
@@ -62,18 +65,18 @@ class _EditPhoneNumberDialogState extends State<EditPhoneNumberDialog> {
         key: _formKey,
         child: AppTextField(
           controller: _controller,
-          labelText: 'Số điện thoại',
-          hintText: 'Nhập số điện thoại mới',
+          labelText: localizations.phoneNumber,
+          hintText: localizations.enterYourNewPhoneNumber,
           keyboardType: TextInputType.phone,
           inputFormatters: [
             FilteringTextInputFormatter.digitsOnly,
           ],
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
-              return 'Số điện thoại không được để trống';
+              return localizations.phoneNumberCannotBeEmpty;
             }
             if (value.length < 10) {
-              return 'Số điện thoại không hợp lệ';
+              return localizations.invalidPhoneNumber;
             }
             return null;
           },
@@ -87,7 +90,7 @@ class _EditPhoneNumberDialogState extends State<EditPhoneNumberDialog> {
           style: TextButton.styleFrom(
             foregroundColor: AppColors.textSecondary,
           ),
-          child: const Text('Hủy'),
+          child: Text(localizations.cancel),
         ),
         FilledButton(
           style: FilledButton.styleFrom(
@@ -98,7 +101,7 @@ class _EditPhoneNumberDialogState extends State<EditPhoneNumberDialog> {
             ),
           ),
           onPressed: _save,
-          child: const Text('Lưu'),
+          child: Text(localizations.save),
         ),
       ],
     );

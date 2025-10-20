@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
+import 'package:mumiappfood/core/theme/app_theme.dart';
+import 'package:mumiappfood/core/theme/theme_cubit.dart';
 import 'package:mumiappfood/core/widgets/app_snackbar.dart';
 import 'package:mumiappfood/features/home/state/home_cubit.dart';
 import 'package:mumiappfood/features/home/state/profile_cubit.dart';
@@ -13,15 +15,18 @@ import 'package:mumiappfood/features/home/widgets/profile/profile_avatar.dart';
 import 'package:mumiappfood/features/home/widgets/profile/profile_menu_item.dart';
 import 'package:mumiappfood/routes/app_router.dart';
 
+import '../../../core/locale/locale_cubit.dart';
+import '../../../core/locale/locale_state.dart';
+import '../../../core/theme/theme_state.dart';
+import '../../../l10n/app_localizations.dart';
 import '../widgets/profile/edit_address_dialog.dart';
 
-// Lớp này chịu trách nhiệm cung cấp ProfileCubit
+/// Lớp này chịu trách nhiệm cung cấp ProfileCubit
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Chúng ta không cần import Geolocator hay Geocoding ở đây nữa
     return BlocProvider(
       create: (context) => ProfileCubit()..loadProfile(),
       child: const ProfileContent(),
@@ -29,13 +34,12 @@ class ProfileView extends StatelessWidget {
   }
 }
 
-// Lớp này chứa UI và các hàm xử lý sự kiện
+/// Lớp này chứa UI và các hàm xử lý sự kiện
 class ProfileContent extends StatelessWidget {
   const ProfileContent({super.key});
 
   // --- CÁC HÀM XỬ LÝ SỰ KIỆN ---
 
-  /// Hiển thị trang chỉnh sửa địa chỉ
   Future<void> _showEditDisplayNameDialog(BuildContext context, String initialValue) async {
     final newName = await showDialog<String>(
       context: context,
@@ -46,17 +50,17 @@ class ProfileContent extends StatelessWidget {
     }
   }
 
-  /// Hiển thị trang chỉnh sửa số điện thoại
   Future<void> _showEditPhoneNumberDialog(BuildContext context, String initialValue) async {
     final newPhoneNumber = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => EditPhoneNumberDialog(initialValue: initialValue == 'Chưa cập nhật' ? '' : initialValue),
+      builder: (dialogContext) =>
+          EditPhoneNumberDialog(initialValue: initialValue == 'Chưa cập nhật' ? '' : initialValue),
     );
     if (newPhoneNumber != null && newPhoneNumber.isNotEmpty && context.mounted) {
       context.read<ProfileCubit>().updatePhoneNumber(newPhoneNumber);
     }
   }
-  /// Hiển thị trang chỉnh sửa địa chỉ
+
   Future<void> _showGenderSelectionSheet(BuildContext context, String initialValue) async {
     final newGender = await showModalBottomSheet<String>(
       context: context,
@@ -71,35 +75,137 @@ class ProfileContent extends StatelessWidget {
     }
   }
 
-  /// Hiển thị trang chỉnh sửa địa chỉ
   Future<void> _showEditAddressDialog(BuildContext context, String initialValue) async {
     final newAddress = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => EditAddressDialog(initialValue: initialValue == 'Chưa cập nhật' ? '' : initialValue),
+      builder: (dialogContext) =>
+          EditAddressDialog(initialValue: initialValue == 'Chưa cập nhật' ? '' : initialValue),
     );
     if (newAddress != null && newAddress.isNotEmpty && context.mounted) {
       context.read<ProfileCubit>().updateAddress(newAddress);
     }
   }
 
+  /// Hiển thị dialog chọn theme
+  Future<void> _showThemeSelectionDialog(BuildContext context) async {
+    final themeCubit = context.read<ThemeCubit>();
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(AppLocalizations.of(context)!.theme),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: AppThemeOptions.values.map((theme) {
+                return ListTile(
+                  title: Text(_getThemeName(theme)),
+                  onTap: () {
+                    themeCubit.setTheme(theme);
+                    Navigator.of(dialogContext).pop();
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showLanguageSelectionDialog(BuildContext context) async {
+    final localeCubit = context.read<LocaleCubit>();
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(AppLocalizations.of(context)!.language),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Tiếng Việt'),
+                onTap: () {
+                  localeCubit.setLocale(const Locale('vi'));
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+              ListTile(
+                title: const Text('English'),
+                onTap: () {
+                  localeCubit.setLocale(const Locale('en'));
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+              ListTile(
+                title: const Text('中文'),
+                onTap: () {
+                  localeCubit.setLocale(const Locale('zh'));
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _getThemeName(AppThemeOptions theme) {
+    switch (theme) {
+      case AppThemeOptions.dark:
+        return 'Tối';
+      case AppThemeOptions.warm:
+        return 'Ấm';
+      case AppThemeOptions.ocean:
+        return 'Biển';
+      case AppThemeOptions.forest:
+        return 'Rừng';
+      case AppThemeOptions.aurora:
+        return 'Cực quang';
+      case AppThemeOptions.light:
+      default:
+        return 'Sáng';
+    }
+  }
+
+  String _getLanguageName(Locale locale) {
+    switch (locale.languageCode) {
+      case 'en':
+        return 'English';
+      case 'zh':
+        return '中文';
+      case 'vi':
+      default:
+        return 'Tiếng Việt';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return BlocConsumer<ProfileCubit, ProfileState>(
       listener: (context, state) {
         if (state is ProfileSaveSuccess) {
-          AppSnackbar.showSuccess(context, 'Đã lưu hồ sơ thành công!');
+          AppSnackbar.showSuccess(context, localizations.save);
         } else if (state is ProfileError && state.message.isNotEmpty) {
           AppSnackbar.showError(context, state.message);
         }
       },
       builder: (context, state) {
         if (state is ProfileInitial || state is ProfileLoading) {
-          return Scaffold(appBar: AppBar(title: const Text('Hồ sơ của tôi')), body: const Center(child: CircularProgressIndicator()));
+          return Scaffold(
+            appBar: AppBar(title: Text(localizations.myProfile)),
+            body: const Center(child: CircularProgressIndicator()),
+          );
         }
 
         if (state is ProfileError) {
-          return Scaffold(appBar: AppBar(title: const Text('Hồ sơ của tôi')), body: Center(child: Text(state.message)));
+          return Scaffold(
+            appBar: AppBar(title: Text(localizations.myProfile)),
+            body: Center(child: Text(state.message)),
+          );
         }
 
         if (state is ProfileLoaded) {
@@ -107,39 +213,22 @@ class ProfileContent extends StatelessWidget {
 
           return Scaffold(
             appBar: AppBar(
-              title: const Text('Hồ sơ của tôi'),
+              title: Text(localizations.myProfile),
               actions: [
                 Padding(
-                  // Thêm padding để tăng vùng nhấn và tạo khoảng cách
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   child: TextButton(
-                    onPressed: loadedState.isSaving ? null : () => context.read<ProfileCubit>().saveProfile(),
-                    // --- THÊM style VÀO ĐÂY ---
-                    style: TextButton.styleFrom(
-                      // Màu chữ khi nút có thể nhấn
-                      foregroundColor: Theme.of(context).primaryColor,
-                      // Màu chữ khi nút bị vô hiệu hóa (isSaving = true)
-                      disabledForegroundColor: Colors.grey,
-                    ),
+                    onPressed: loadedState.isSaving
+                        ? null
+                        : () => context.read<ProfileCubit>().saveProfile(),
                     child: loadedState.isSaving
-                    // Hiển thị vòng xoay loading với màu chủ đạo
-                        ? SizedBox(
+                        ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        // Chỉ định màu cho vòng xoay
-                        color: Theme.of(context).primaryColor,
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                    // Hiển thị văn bản
-                        : const Text(
-                      'Lưu',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold, // Làm chữ đậm hơn
-                        fontSize: 16,                // Tăng kích thước chữ một chút
-                      ),
-                    ),
+                        : Text(localizations.save,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -150,14 +239,18 @@ class ProfileContent extends StatelessWidget {
                 children: [
                   ProfileAvatar(
                     photoURL: loadedState.photoURL,
-                    fallbackText: loadedState.displayName.isNotEmpty ? loadedState.displayName.substring(0, 1).toUpperCase() : 'U',
-                    onImageSelected: (XFile imageFile) => context.read<ProfileCubit>().updateAvatar(imageFile),
+                    fallbackText: loadedState.displayName.isNotEmpty
+                        ? loadedState.displayName.substring(0, 1).toUpperCase()
+                        : 'U',
+                    onImageSelected: (XFile imageFile) =>
+                        context.read<ProfileCubit>().updateAvatar(imageFile),
                   ),
                   vSpaceM,
-                  Text(loadedState.displayName, style: Theme.of(context).textTheme.headlineSmall),
+                  Text(loadedState.displayName,
+                      style: Theme.of(context).textTheme.headlineSmall),
                   Text(
-                      loadedState.userData['email'] ?? 'Không có email',
-                      style: Theme.of(context).textTheme.bodyMedium
+                    loadedState.userData['email'] ?? localizations.noEmail,
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   vSpaceXL,
                   Card(
@@ -165,30 +258,59 @@ class ProfileContent extends StatelessWidget {
                       children: [
                         ProfileMenuItem(
                           icon: Icons.person_outline,
-                          title: 'Tên hiển thị',
+                          title: localizations.displayName,
                           value: loadedState.displayName,
                           onTap: () => _showEditDisplayNameDialog(context, loadedState.displayName),
                         ),
                         const Divider(height: 1),
                         ProfileMenuItem(
                           icon: Icons.phone_outlined,
-                          title: 'Số điện thoại',
+                          title: localizations.phoneNumber,
                           value: loadedState.phoneNumber,
-                          onTap: () => _showEditPhoneNumberDialog(context, loadedState.phoneNumber),
+                          onTap: () =>
+                              _showEditPhoneNumberDialog(context, loadedState.phoneNumber),
                         ),
                         const Divider(height: 1),
                         ProfileMenuItem(
                           icon: Icons.location_on_outlined,
-                          title: 'Địa chỉ',
+                          title: localizations.address,
                           value: loadedState.address,
                           onTap: () => _showEditAddressDialog(context, loadedState.address),
                         ),
                         const Divider(height: 1),
                         ProfileMenuItem(
                           icon: Icons.transgender_outlined,
-                          title: 'Giới tính',
+                            title: localizations.gender,
                           value: loadedState.gender,
                           onTap: () => _showGenderSelectionSheet(context, loadedState.gender),
+                        ),
+                      ],
+                    ),
+                  ),
+                  vSpaceL,
+                  Card(
+                    child: Column(
+                      children: [
+                        BlocBuilder<ThemeCubit, ThemeState>(
+                          builder: (context, themeState) {
+                            return ProfileMenuItem(
+                              icon: Icons.color_lens_outlined,
+                              title: localizations.theme,
+                              value: _getThemeName(themeState.appTheme),
+                              onTap: () => _showThemeSelectionDialog(context),
+                            );
+                          },
+                        ),
+                        const Divider(height: 1),
+                        BlocBuilder<LocaleCubit, LocaleState>(
+                          builder: (context, localeState) {
+                            return ProfileMenuItem(
+                              icon: Icons.language_outlined,
+                              title: localizations.language,
+                              value: _getLanguageName(localeState.locale),
+                              onTap: () => _showLanguageSelectionDialog(context),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -205,10 +327,8 @@ class ProfileContent extends StatelessWidget {
                     child: Card(
                       child: ProfileMenuItem(
                         icon: Icons.logout,
-                        title: 'Đăng xuất',
-                        onTap: () {
-                          context.read<HomeCubit>().logout();
-                        },
+                        title: localizations.logout,
+                        onTap: () => context.read<HomeCubit>().logout(),
                         isEditable: false,
                       ),
                     ),
@@ -219,7 +339,10 @@ class ProfileContent extends StatelessWidget {
           );
         }
 
-        return const Scaffold(body: Center(child: Text('Trạng thái không xác định')));
+        return Scaffold(
+          appBar: AppBar(title: Text(localizations.myProfile)),
+          body: const Center(child: Text('Trạng thái không xác định')),
+        );
       },
     );
   }

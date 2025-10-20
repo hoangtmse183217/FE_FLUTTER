@@ -1,10 +1,9 @@
-// lib/features/notifications/pages/notifications_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
 
-import '../widgets/notification/notification_item.dart';
 
+import '../../../l10n/app_localizations.dart';
+import '../widgets/notification/notification_item.dart';
 
 // Dữ liệu giả, bạn sẽ thay thế bằng dữ liệu từ Firestore/API
 final List<Map<String, dynamic>> _todayNotifications = [
@@ -39,15 +38,17 @@ class NotificationsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Thông báo'),
+        title: Text(localizations.notifications),
       ),
       body: ListView(
         padding: const EdgeInsets.all(kSpacingM),
         children: [
           // Phần thông báo "Hôm nay"
-          _buildSectionTitle(context, 'Hôm nay'),
+          _buildSectionTitle(context, localizations.today),
           vSpaceM,
           ListView.separated(
             shrinkWrap: true,
@@ -68,7 +69,7 @@ class NotificationsPage extends StatelessWidget {
           vSpaceL,
 
           // Phần thông báo "Tuần này"
-          _buildSectionTitle(context, 'Tuần này'),
+          _buildSectionTitle(context, localizations.thisWeek),
           vSpaceM,
           ListView.separated(
             shrinkWrap: true,

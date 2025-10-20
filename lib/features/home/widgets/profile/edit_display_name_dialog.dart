@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mumiappfood/core/widgets/app_textfield.dart';
 import 'package:mumiappfood/core/constants/app_icons.dart';
+import '../../../../l10n/app_localizations.dart';
 
 import '../../../../core/constants/colors.dart';
 
@@ -37,6 +38,8 @@ class _EditDisplayNameDialogState extends State<EditDisplayNameDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return AlertDialog(
       backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
@@ -45,14 +48,13 @@ class _EditDisplayNameDialogState extends State<EditDisplayNameDialog> {
       titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
       contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
 
-      // Tiêu đề có icon để đẹp và đồng bộ với phong cách app
-      title: const Row(
+      title: Row(
         children: [
-          Icon(AppIcons.displayName, color: AppColors.primary),
-          SizedBox(width: 8),
+          const Icon(AppIcons.displayName, color: AppColors.primary),
+          const SizedBox(width: 8),
           Text(
-            'Thay đổi tên hiển thị',
-            style: TextStyle(
+            localizations.changeDisplayName,
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
               fontSize: 18,
@@ -65,11 +67,11 @@ class _EditDisplayNameDialogState extends State<EditDisplayNameDialog> {
         key: _formKey,
         child: AppTextField(
           controller: _controller,
-          hintText: 'Nhập tên mới của bạn',
-          labelText: 'Tên hiển thị',
+          hintText: localizations.enterYourNewName,
+          labelText: localizations.displayName,
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
-              return 'Tên không được để trống';
+              return localizations.nameCannotBeEmpty;
             }
             return null;
           },
@@ -83,7 +85,7 @@ class _EditDisplayNameDialogState extends State<EditDisplayNameDialog> {
           style: TextButton.styleFrom(
             foregroundColor: AppColors.textSecondary,
           ),
-          child: const Text('Hủy'),
+          child: Text(localizations.cancel),
         ),
         FilledButton(
           style: FilledButton.styleFrom(
@@ -94,7 +96,7 @@ class _EditDisplayNameDialogState extends State<EditDisplayNameDialog> {
             ),
           ),
           onPressed: _save,
-          child: const Text('Lưu'),
+          child: Text(localizations.save),
         ),
       ],
     );
