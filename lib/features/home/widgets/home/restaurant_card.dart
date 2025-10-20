@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
 import 'package:mumiappfood/features/home/state/favorites_cubit.dart';
 import 'package:mumiappfood/routes/app_router.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class RestaurantCard extends StatelessWidget {
   final String restaurantId;
@@ -11,7 +12,7 @@ class RestaurantCard extends StatelessWidget {
   final String imageUrl;
   final String cuisine;
   final double rating;
-  final List<String> moods;
+  final List<String> moods; // Expecting mood keys, e.g., ['family', 'romantic']
 
   const RestaurantCard({
     super.key,
@@ -22,6 +23,28 @@ class RestaurantCard extends StatelessWidget {
     required this.rating,
     required this.moods,
   });
+
+  String _getLocalizedMood(BuildContext context, String moodKey) {
+    final localizations = AppLocalizations.of(context)!;
+    switch (moodKey) {
+      case 'family':
+        return localizations.family;
+      case 'relaxing':
+        return localizations.relaxing;
+      case 'romantic':
+        return localizations.romantic;
+      case 'lively':
+        return localizations.lively;
+      case 'luxurious':
+        return localizations.luxurious;
+      case 'quick':
+        return localizations.quick;
+      case 'friends':
+        return localizations.friends;
+      default:
+        return moodKey; // Fallback
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,13 +139,16 @@ class RestaurantCard extends StatelessWidget {
                     Wrap(
                       spacing: 8.0,
                       runSpacing: 4.0,
-                      children: moods.map((mood) => Chip(
-                        label: Text(mood),
-                        padding: EdgeInsets.zero,
-                        backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-                        labelStyle: TextStyle(color: Theme.of(context).primaryColor, fontSize: 12),
-                        side: BorderSide.none,
-                      )).toList(),
+                      children: moods.map((moodKey) {
+                        final localizedMood = _getLocalizedMood(context, moodKey);
+                        return Chip(
+                          label: Text(localizedMood),
+                          padding: EdgeInsets.zero,
+                          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                          labelStyle: TextStyle(color: Theme.of(context).primaryColor, fontSize: 12),
+                          side: BorderSide.none,
+                        );
+                      }).toList(),
                     ),
                 ],
               ),

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
 import 'package:mumiappfood/core/widgets/app_snackbar.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../routes/app_router.dart';
 import '../widgets/home/location_display.dart';
 import '../widgets/home/location_selection_sheet.dart';
@@ -20,7 +21,7 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  String _currentLocation = 'Chọn vị trí của bạn';
+  String? _currentLocation;
 
   @override
   void initState() {
@@ -30,10 +31,11 @@ class _HomeViewState extends State<HomeView> {
   }
 
   Future<void> _fetchCurrentAddress({bool showError = true}) async {
+    final localizations = AppLocalizations.of(context)!;
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        if (showError && mounted) AppSnackbar.showError(context, 'Vui lòng bật dịch vụ định vị.');
+        if (showError && mounted) AppSnackbar.showError(context, localizations.locationServicesOff);
         return;
       }
 
@@ -41,13 +43,13 @@ class _HomeViewState extends State<HomeView> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          if (showError && mounted) AppSnackbar.showError(context, 'Quyền truy cập vị trí đã bị từ chối.');
+          if (showError && mounted) AppSnackbar.showError(context, localizations.locationPermissionDenied);
           return;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        if (showError && mounted) AppSnackbar.showError(context, 'Bạn cần cấp quyền vị trí trong cài đặt.');
+        if (showError && mounted) AppSnackbar.showError(context, localizations.locationPermissionPermanentlyDenied);
         return;
       }
 
@@ -64,19 +66,19 @@ class _HomeViewState extends State<HomeView> {
         }
       }
     } catch (e) {
-      if (showError && mounted) AppSnackbar.showError(context, 'Không thể lấy được vị trí.');
+      if (showError && mounted) AppSnackbar.showError(context, localizations.cannotGetLocation);
     }
   }
 
   void _showLocationPicker() async {
-    // Chỉ cần mở BottomSheet và truyền vào vị trí đã có và hàm để cập nhật
+    final localizations = AppLocalizations.of(context)!;
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (BuildContext context) {
         return LocationSelectionSheet(
-          currentAddress: _currentLocation == 'Chọn vị trí của bạn' ? null : _currentLocation,
+          currentAddress: _currentLocation,
           onRefreshLocation: _fetchCurrentAddress,
         );
       },
@@ -85,15 +87,15 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
-    // Lấy tên người dùng từ Firebase Auth để hiển thị lời chào
-    final userName = FirebaseAuth.instance.currentUser?.displayName ?? 'Bạn';
+    final localizations = AppLocalizations.of(context)!;
+    final userName = FirebaseAuth.instance.currentUser?.displayName ?? localizations.user;
 
     return Scaffold(
       appBar: AppBar(
         leading: Padding(
           padding: const EdgeInsets.only(left: kSpacingM),
           child: LocationDisplay(
-            location: _currentLocation,
+            location: _currentLocation ?? localizations.selectYourLocation,
             onTap: _showLocationPicker,
           ),
         ),
@@ -113,31 +115,24 @@ class _HomeViewState extends State<HomeView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- Phần Chào Mừng ---
             Text(
-              'Xin chào, $userName!',
+              localizations.helloUser(userName),
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             vSpaceS,
-            const Text(
-              'Bạn cảm thấy thế nào hôm nay?',
-              style: TextStyle(fontSize: 18, color: Colors.grey),
+            Text(
+              localizations.howAreYouFeelingToday,
+              style: const TextStyle(fontSize: 18, color: Colors.grey),
             ),
             vSpaceM,
-
-            // --- Phần Chọn Mood ---
             const MoodSelector(),
             vSpaceL,
-
-            // --- Phần Gợi Ý ---
-            SectionHeader(title: 'Gợi ý nổi bật', onSeeAll: () {
+            SectionHeader(title: localizations.featuredSuggestions, onSeeAll: () {
               // TODO: Điều hướng sang trang Khám phá
             }),
             vSpaceM,
-
-            // --- Danh sách Nhà hàng Gợi ý ---
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -150,9 +145,9 @@ class _HomeViewState extends State<HomeView> {
                   imageUrl: index == 0
                       ? 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=500'
                       : 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
-                  cuisine: index == 0 ? 'Món Việt' : 'Pizza & Mì Ý',
+                  cuisine: index == 0 ? localizations.vietnameseCuisine : localizations.pizzaAndPasta,
                   rating: index == 0 ? 4.8 : 4.9,
-                  moods: index == 0 ? const ['Gia đình', 'Thư giãn'] : const ['Gia đình', 'Lãng mạn'],
+                  moods: index == 0 ? [localizations.family, localizations.relaxing] : [localizations.family, localizations.romantic],
                 );
               },
             ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class AddressInputPage extends StatefulWidget {
   const AddressInputPage({super.key});
 
@@ -22,28 +24,37 @@ class _AddressInputPageState extends State<AddressInputPage> {
       Navigator.pop(context, address);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập địa chỉ!')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.address),
+        ),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Nhập địa chỉ')),
+      appBar: AppBar(
+        title: Text(loc.address),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             TextField(
               controller: _controller,
-              decoration: const InputDecoration(labelText: 'Nhập địa chỉ của bạn'),
+              decoration: InputDecoration(
+                labelText: loc.address, //
+                hintText: '${loc.address}...',
+              ),
               onSubmitted: (_) => _submitAddress(),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _submitAddress,
-              child: const Text('Tìm'),
+              child: Text(loc.save),
             ),
           ],
         ),

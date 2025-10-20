@@ -3,6 +3,8 @@ import 'package:mumiappfood/core/constants/app_spacing.dart';
 import 'package:mumiappfood/core/constants/colors.dart';
 import 'package:mumiappfood/core/widgets/app_button.dart';
 
+import '../../../../l10n/app_localizations.dart';
+
 class FilterBottomSheet extends StatefulWidget {
   final Set<String> initialPriceRanges;
   final double initialMinRating;
@@ -18,34 +20,38 @@ class FilterBottomSheet extends StatefulWidget {
 }
 
 class _FilterBottomSheetState extends State<FilterBottomSheet> {
-  late Set<String> _selectedPriceRanges;
+  late Set<String> _selectedPriceKeys;
   late double _minRating;
 
-  final List<String> _priceOptions = const ['100.000₫', '500.000₫', '1.000.000₫'];
-  // Thêm các lựa chọn khác nếu cần, ví dụ: ẩm thực
+  // Sử dụng một Map với key ổn định và value được bản địa hóa
+  Map<String, String> _getPriceOptions(AppLocalizations localizations) {
+    return {
+      '100k': localizations.price100k,
+      '500k': localizations.price500k,
+      '1m': localizations.price1m,
+    };
+  }
 
   @override
   void initState() {
     super.initState();
-    // Khởi tạo state cục bộ từ giá trị ban đầu được truyền vào
-    _selectedPriceRanges = Set.from(widget.initialPriceRanges);
+    _selectedPriceKeys = Set.from(widget.initialPriceRanges);
     _minRating = widget.initialMinRating;
   }
 
-  void _onPriceChipSelected(String price) {
+  void _onPriceChipSelected(String priceKey) {
     setState(() {
-      if (_selectedPriceRanges.contains(price)) {
-        _selectedPriceRanges.remove(price);
+      if (_selectedPriceKeys.contains(priceKey)) {
+        _selectedPriceKeys.remove(priceKey);
       } else {
-        _selectedPriceRanges.add(price);
+        _selectedPriceKeys.add(priceKey);
       }
     });
   }
 
   void _applyFilters() {
-    // Trả về một Map chứa các giá trị đã chọn
     final result = {
-      'priceRanges': _selectedPriceRanges,
+      'priceRanges': _selectedPriceKeys,
       'minRating': _minRating,
     };
     Navigator.pop(context, result);
@@ -53,34 +59,35 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+    final priceOptions = _getPriceOptions(localizations);
+
     return Padding(
       padding: const EdgeInsets.all(kSpacingL),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Bộ lọc', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(localizations.filters, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           vSpaceM,
-          // --- LỌC THEO GIÁ ---
-          const Text('Mức giá', style: TextStyle(fontWeight: FontWeight.w600)),
+          Text(localizations.priceLevel, style: const TextStyle(fontWeight: FontWeight.w600)),
           vSpaceS,
           Wrap(
             spacing: kSpacingS,
-            children: _priceOptions.map((price) {
+            children: priceOptions.keys.map((key) {
               return ChoiceChip(
                 selectedColor: AppColors.primary,
-                label: Text(price),
-                selected: _selectedPriceRanges.contains(price),
-                onSelected: (_) => _onPriceChipSelected(price),
+                label: Text(priceOptions[key]!),
+                selected: _selectedPriceKeys.contains(key),
+                onSelected: (_) => _onPriceChipSelected(key),
               );
             }).toList(),
           ),
           const Divider(height: kSpacingL),
-          // --- LỌC THEO RATING ---
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Rating từ', style: TextStyle(fontWeight: FontWeight.w600)),
+              Text(localizations.ratingFrom, style: const TextStyle(fontWeight: FontWeight.w600)),
               Text(
                 '${_minRating.toStringAsFixed(1)} ★',
                 style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
@@ -94,7 +101,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             value: _minRating,
             min: 0,
             max: 5,
-            divisions: 10, // 0.5, 1.0, 1.5...
+            divisions: 10,
             label: _minRating.toStringAsFixed(1),
             onChanged: (newRating) {
               setState(() {
@@ -103,11 +110,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             },
           ),
           vSpaceL,
-          // --- NÚT HÀNH ĐỘNG ---
           SizedBox(
             width: double.infinity,
             child: AppButton(
-              text: 'Áp dụng',
+              text: localizations.apply,
               onPressed: _applyFilters,
             ),
           ),
