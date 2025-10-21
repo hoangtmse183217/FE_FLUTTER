@@ -192,7 +192,7 @@ class AuthApiProvider {
     }
   }
 
-  /// --- SỬA LẠI HÀM NÀY ĐỂ TRẢ VỀ TOKEN ---
+  /// Yêu cầu đặt lại mật khẩu
   Future<String> requestPasswordReset({required String email}) async {
     final uri = Uri.parse(ApiConstants.baseUrl + '/auth/forgot-password');
     try {
@@ -225,7 +225,7 @@ class AuthApiProvider {
     }
   }
 
-  /// --- SỬA LẠI HÀM NÀY ĐỂ GỬI THÊM TOKEN ---
+  /// Đặt lại mật khẩu
   Future<void> resetPassword({
     required String email,
     required String token,

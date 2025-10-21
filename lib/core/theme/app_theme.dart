@@ -5,9 +5,7 @@ enum AppThemeOptions {
   light,
   dark,
   warm,
-  ocean,
   forest,
-  aurora,
 }
 
 /// Định nghĩa chủ đề giao diện chung cho toàn bộ ứng dụng.
@@ -73,25 +71,6 @@ class AppTheme {
     // ... (Tùy chỉnh thêm nếu cần)
   );
 
-  // --- CHỦ ĐỀ BIỂN (ĐÃ CẢI TIẾN) ---
-  static final ThemeData oceanTheme = ThemeData(
-    fontFamily: 'Poppins',
-    brightness: Brightness.dark,
-    colorScheme: const ColorScheme.dark(
-      primary: AppColors.oceanPrimary,
-      secondary: AppColors.oceanAccent,
-      background: AppColors.oceanBackground,
-      surface: AppColors.oceanSurface,
-      error: AppColors.error,
-      onPrimary: AppColors.oceanText,
-      onSecondary: AppColors.oceanBackground,
-      onBackground: AppColors.oceanText,
-      onSurface: AppColors.oceanText,
-      onError: AppColors.oceanBackground,
-    ),
-    // ... (Tùy chỉnh thêm nếu cần)
-  );
-
   // --- CHỦ ĐỀ RỪNG ---
   static final ThemeData forestTheme = ThemeData(
     fontFamily: 'Poppins',
@@ -111,38 +90,14 @@ class AppTheme {
     // ... (Tùy chỉnh thêm nếu cần)
   );
 
-  // --- CHỦ ĐỀ CỰC QUANG (ĐÃ CẢI TIẾN) ---
-  static final ThemeData auroraTheme = ThemeData(
-    fontFamily: 'Poppins',
-    brightness: Brightness.dark,
-    colorScheme: const ColorScheme.dark(
-      primary: AppColors.auroraPrimary,
-      secondary: AppColors.auroraAccent,
-      background: AppColors.auroraBackground,
-      surface: AppColors.auroraSurface,
-      error: AppColors.error,
-      onPrimary: AppColors.auroraText,
-      onSecondary: AppColors.auroraBackground,
-      onBackground: AppColors.auroraText,
-      onSurface: AppColors.auroraText,
-      onError: AppColors.auroraBackground,
-    ),
-    // ... (Tùy chỉnh thêm nếu cần)
-  );
-
-
   static ThemeData getTheme(AppThemeOptions option) {
     switch (option) {
       case AppThemeOptions.dark:
         return darkTheme;
       case AppThemeOptions.warm:
         return warmTheme;
-      case AppThemeOptions.ocean:
-        return oceanTheme;
       case AppThemeOptions.forest:
         return forestTheme;
-      case AppThemeOptions.aurora:
-        return auroraTheme;
       case AppThemeOptions.light:
       default:
         return lightTheme;

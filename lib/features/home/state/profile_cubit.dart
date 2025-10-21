@@ -73,50 +73,57 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
-  /// Gửi tất cả các thay đổi lên server
   Future<void> saveProfile() async {
     if (state is! ProfileLoaded) return;
     final currentState = state as ProfileLoaded;
     emit(currentState.copyWith(isSaving: true));
 
     try {
-      // --- LOGIC MỚI: CHỈ GỬI CÁC TRƯỜNG CÓ DỮ LIỆU HỢP LỆ ---
+      String? newAvatarUrl;
+      // 1. NẾU CÓ ẢNH MỚI, TẢI LÊN TRƯỚC
+      if (currentState.newAvatarFile != null) {
+        AppLogger.info('Đang tải lên avatar mới...');
+        newAvatarUrl = await _profileRepository.uploadAvatar(currentState.newAvatarFile!);
+        AppLogger.success('Tải avatar thành công: $newAvatarUrl');
+      }
+
+      // 2. CHUẨN BỊ DỮ LIỆU VĂN BẢN (CHỈ GỬI CÁC TRƯỜNG CÓ DỮ LIỆU HỢP LỆ)
       final Map<String, dynamic> dataToUpdate = {
         'fullname': currentState.displayName,
       };
 
-      // Chỉ thêm các trường vào Map nếu chúng không phải là giá trị mặc định
+      // Chỉ thêm các trường nếu chúng có giá trị thật
       if (currentState.phoneNumber.isNotEmpty && currentState.phoneNumber != 'Chưa cập nhật') {
         dataToUpdate['phoneNumber'] = currentState.phoneNumber;
       }
-
       if (currentState.address.isNotEmpty && currentState.address != 'Chưa cập nhật') {
         dataToUpdate['address'] = currentState.address;
       }
-
       if (currentState.gender.isNotEmpty && currentState.gender != 'Chưa cập nhật') {
-        String _mapGenderToApiValue(String uiGender) {
-          if (uiGender == 'Nam') return 'Male';
-          if (uiGender == 'Nữ') return 'Female';
-          return 'Other'; // Hoặc ném lỗi nếu muốn
-        }
-        dataToUpdate['gender'] = _mapGenderToApiValue(currentState.gender);
+        // Giả sử API yêu cầu 'Male', 'Female', 'Other' (viết hoa chữ cái đầu)
+        final apiGender = currentState.gender[0].toUpperCase() + currentState.gender.substring(1);
+        dataToUpdate['gender'] = apiGender;
       }
 
-      // TODO: Xử lý upload avatar nếu có
+      // Thêm URL avatar mới (nếu có) vào dữ liệu cần cập nhật
+      if (newAvatarUrl != null) {
+        dataToUpdate['avatar'] = newAvatarUrl;
+      }
 
-      // GỌI API VỚI DỮ LIỆU ĐÃ ĐƯỢC LỌC
+      // 3. GỌI API CẬP NHẬT PROFILE
       await _profileRepository.updateMyProfile(dataToUpdate);
 
       AppLogger.success('Lưu hồ sơ thành công.');
       emit(ProfileSaveSuccess());
 
-      // Tải lại dữ liệu mới nhất
+      // Tải lại toàn bộ dữ liệu mới nhất từ server sau khi lưu
+      emit(ProfileInitial()); // Reset state để loadProfile chạy lại
       await loadProfile();
 
     } catch (e) {
       AppLogger.error('Lỗi lưu hồ sơ: $e');
-      emit(ProfileError(message: 'Lưu hồ sơ thất bại: ${e.toString().replaceFirst('Exception: ', '')}'));
+      emit(ProfileError(message: 'Lưu hồ-sơ-thất-bại: ${e.toString()}'));
+      // Quay lại trạng thái Loaded với isSaving = false
       emit(currentState.copyWith(isSaving: false));
     }
   }

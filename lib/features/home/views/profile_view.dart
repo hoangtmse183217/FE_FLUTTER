@@ -157,12 +157,8 @@ class ProfileContent extends StatelessWidget {
         return 'Tối';
       case AppThemeOptions.warm:
         return 'Ấm';
-      case AppThemeOptions.ocean:
-        return 'Biển';
       case AppThemeOptions.forest:
         return 'Rừng';
-      case AppThemeOptions.aurora:
-        return 'Cực quang';
       case AppThemeOptions.light:
       default:
         return 'Sáng';

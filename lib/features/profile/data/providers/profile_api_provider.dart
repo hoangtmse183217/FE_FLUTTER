@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:mumiappfood/core/constants/api.dart';
 import 'package:mumiappfood/core/services/auth_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 // Lớp Exception tùy chỉnh cho các lỗi liên quan đến Profile
 class ProfileException implements Exception {
@@ -86,6 +87,51 @@ class ProfileApiProvider {
     }
   }
 
-// TODO: Thêm hàm uploadAvatar khi cần
-// Future<String> uploadAvatar(XFile imageFile) async { ... }
+  /// Tải lên ảnh đại diện
+  Future<String> uploadAvatar(XFile imageFile) async {
+    final accessToken = await AuthService.getValidAccessToken();
+    if (accessToken == null) throw ProfileException('Chưa đăng nhập.');
+
+    final uri = Uri.parse(ApiConstants.baseUrl + '/profile/avatar');
+
+    try {
+      // 1. Tạo một multipart request
+      var request = http.MultipartRequest('POST', uri);
+
+      // 2. Thêm headers, đặc biệt là Authorization
+      request.headers['Authorization'] = 'Bearer $accessToken';
+      request.headers['Content-Type'] = 'multipart/form-data';
+
+      // 3. Thêm file vào request
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'file', // Tên field này phải khớp với backend ("IFormFile file")
+          imageFile.path,
+        ),
+      );
+
+      // 4. Gửi request và chờ response
+      var streamedResponse = await request.send().timeout(const Duration(seconds: 30)); // Tăng timeout cho việc upload file
+
+      // 5. Đọc và giải mã response
+      var response = await http.Response.fromStream(streamedResponse);
+      var responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['isSuccess'] == true) {
+        // Trả về URL của ảnh mới
+        return responseData['data']['avatarUrl'] as String;
+      } else {
+        // Xử lý lỗi từ server
+        final errorMessage = responseData['message'] ?? responseData['errors']?.first ?? 'Tải ảnh lên thất bại.';
+        throw ProfileException(errorMessage);
+      }
+    } on SocketException {
+      throw ProfileException('Không có kết nối mạng.');
+    } on TimeoutException {
+      throw ProfileException('Tải ảnh lên quá lâu. Vui lòng thử lại.');
+    } catch (e) {
+      if (e is ProfileException) rethrow;
+      throw ProfileException('Lỗi không xác định khi tải ảnh.');
+    }
+  }
 }

@@ -32,7 +32,7 @@ class _GenderSelectionSheetState extends State<GenderSelectionSheet> {
       case 'other':
         return localizations.other;
       default:
-        return genderKey; // Fallback
+        return genderKey;
     }
   }
 

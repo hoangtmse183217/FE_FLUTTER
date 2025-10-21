@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart'; // <-- 1. Bỏ comment dòng này
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
 
 class RestaurantMapSection extends StatelessWidget {
@@ -29,13 +29,9 @@ class RestaurantMapSection extends StatelessWidget {
           SizedBox(
             height: 200,
             width: double.infinity,
-            // =======================================================
-            // === THAY THẾ WIDGET GIẢ LẬP BẰNG GoogleMap THẬT ===
-            // =======================================================
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: GoogleMap(
-                // Vô hiệu hóa các cử chỉ để tránh xung đột với cuộn trang
                 scrollGesturesEnabled: false,
                 zoomGesturesEnabled: false,
                 // Vị trí camera ban đầu
@@ -43,7 +39,6 @@ class RestaurantMapSection extends StatelessWidget {
                   target: initialPosition,
                   zoom: 15, // Mức độ zoom
                 ),
-                // Tạo một điểm đánh dấu (marker) tại vị trí nhà hàng
                 markers: {
                   Marker(
                     markerId: MarkerId(restaurantName),
