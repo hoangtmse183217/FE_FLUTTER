@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
-import 'package:mumiappfood/features/chat/data/models/chat_message.dart';
 import 'package:mumiappfood/features/chat/state/chat_cubit.dart';
 import 'package:mumiappfood/features/chat/state/chat_state.dart';
-import 'package:mumiappfood/features/chat/widgets/message_bubble.dart'; // Sửa import
+import 'package:mumiappfood/features/chat/widgets/message_list.dart';
+import 'package:mumiappfood/features/chat/widgets/suggestion_bottom_sheet.dart';
 
 class ChatPage extends StatelessWidget {
   const ChatPage({super.key});
@@ -27,39 +27,27 @@ class _ChatView extends StatefulWidget {
 
 class _ChatViewState extends State<_ChatView> {
   final _controller = TextEditingController();
-  final _scrollController = ScrollController();
 
   void _sendMessage() {
     final text = _controller.text.trim();
     if (text.isNotEmpty) {
       context.read<ChatCubit>().sendMessage(text);
       _controller.clear();
-      _scrollToBottom();
     }
   }
 
-  void _sendTopic(String topic) {
-    context.read<ChatCubit>().sendMessage(topic);
-    _scrollToBottom();
-  }
-
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          0.0,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
+  void _showSuggestionSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) {
+        // Cung cấp ChatCubit hiện tại cho BottomSheet
+        return BlocProvider.value(
+          value: context.read<ChatCubit>(),
+          child: const SuggestionBottomSheet(),
         );
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _scrollController.dispose();
-    super.dispose();
+      },
+    );
   }
 
   @override
@@ -75,63 +63,23 @@ class _ChatViewState extends State<_ChatView> {
             child: BlocBuilder<ChatCubit, ChatState>(
               builder: (context, state) {
                 if (state is ChatLoaded) {
-                  return ListView.builder(
-                    controller: _scrollController,
-                    reverse: true,
-                    padding: const EdgeInsets.all(kSpacingM),
-                    itemCount: state.messages.length,
-                    itemBuilder: (context, index) {
-                      final message = state.messages[index];
-                      // SỬA LỖI: Cập nhật lại widget bubble
-                      return _buildMessageBubble(message);
-                    },
-                  );
+                  return MessageList(messages: state.messages);
                 }
+                // Giao diện ban đầu: Lời chào
                 return const Center(
-                  child: Text('Hãy bắt đầu cuộc trò chuyện!'),
+                  child: Padding(
+                    padding: EdgeInsets.all(kSpacingL),
+                    child: Text(
+                      'Bạn cần tìm món gì? Hãy chat với tôi hoặc thử gợi ý nâng cao nhé!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
                 );
               },
             ),
           ),
-          _buildInputArea(),
-        ],
-      ),
-    );
-  }
-
-  // SỬA LỖI: Tách widget bubble ra
-  Widget _buildMessageBubble(ChatMessage message) {
-    final isUser = message.sender == MessageSender.user;
-    final alignment = isUser ? Alignment.centerRight : Alignment.centerLeft;
-
-    return Align(
-      alignment: alignment,
-      child: Column(
-        crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-        children: [
-          MessageBubble(message: message),
-          if (message.relatedTopics != null && message.relatedTopics!.isNotEmpty) ...[
-            vSpaceS,
-            Container(
-              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
-              child: Wrap(
-                alignment: WrapAlignment.start,
-                spacing: kSpacingS,
-                runSpacing: kSpacingS,
-                children: message.relatedTopics!.map((topic) {
-                  return ActionChip(
-                    label: Text(topic),
-                    onPressed: () => _sendTopic(topic),
-                    backgroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(color: Colors.grey[300]!)
-                    ),
-                  );
-                }).toList(),
-              ),
-            )
-          ]
+          _buildInputArea(), // Vùng nhập liệu luôn hiển thị
         ],
       ),
     );
@@ -154,6 +102,13 @@ class _ChatViewState extends State<_ChatView> {
         ),
         child: Row(
           children: [
+            // Nút mở gợi ý nâng cao
+            IconButton(
+              icon: const Icon(Icons.auto_awesome_outlined), // Icon tia lửa
+              onPressed: _showSuggestionSheet,
+              tooltip: 'Gợi ý nâng cao',
+            ),
+            // Ô nhập liệu
             Expanded(
               child: TextField(
                 controller: _controller,
@@ -165,12 +120,13 @@ class _ChatViewState extends State<_ChatView> {
                     borderRadius: BorderRadius.circular(30),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: kSpacingL),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: kSpacingL, vertical: 10),
                 ),
                 onSubmitted: (_) => _sendMessage(),
               ),
             ),
             hSpaceS,
+            // Nút gửi
             IconButton(
               icon: const Icon(Icons.send),
               onPressed: _sendMessage,
@@ -180,5 +136,11 @@ class _ChatViewState extends State<_ChatView> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }

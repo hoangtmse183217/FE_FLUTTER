@@ -9,17 +9,11 @@ class ChatCubit extends Cubit<ChatState> {
   ChatCubit() : _chatRepository = ChatRepository(), super(const ChatInitial());
 
   Future<void> sendMessage(String text) async {
-    // SỬA LỖI: Sử dụng MessageSender.user
     final userMessage = ChatMessage(text: text, sender: MessageSender.user);
-    final currentState = state;
-    List<ChatMessage> currentMessages = currentState is ChatLoaded ? List.from(currentState.messages) : [];
-
-    currentMessages.insert(0, userMessage);
-    emit(ChatLoaded(messages: currentMessages));
+    _addMessageToState(userMessage);
 
     final thinkingMessage = ChatMessage(text: '...', sender: MessageSender.bot);
-    currentMessages.insert(0, thinkingMessage);
-    emit(ChatLoaded(messages: List.from(currentMessages)));
+    _addMessageToState(thinkingMessage);
 
     try {
       final response = await _chatRepository.sendMessage(text);
@@ -31,16 +25,60 @@ class ChatCubit extends Cubit<ChatState> {
         sender: MessageSender.bot,
         relatedTopics: relatedTopics,
       );
-
-      currentMessages.removeAt(0); 
-      currentMessages.insert(0, botMessage);
-      emit(ChatLoaded(messages: currentMessages));
-
+      _replaceLastMessage(botMessage);
     } catch (e) {
-      final errorMessage = ChatMessage(text: 'Đã có lỗi xảy ra: ${e.toString()}', sender: MessageSender.bot);
-      currentMessages.removeAt(0); 
-      currentMessages.insert(0, errorMessage);
+      _handleError(e);
+    }
+  }
+
+  Future<void> getMoodSuggestions(String mood, String location) async {
+    final userRequest = 'Tâm trạng: **$mood**\nĐịa điểm: **$location**';
+    final userMessage = ChatMessage(text: userRequest, sender: MessageSender.user);
+    emit(ChatLoaded(messages: [userMessage]));
+
+    final thinkingMessage = ChatMessage(text: 'Đang tìm gợi ý phù hợp cho bạn...', sender: MessageSender.bot);
+    _addMessageToState(thinkingMessage);
+
+    try {
+      final response = await _chatRepository.suggestByMood(mood, location);
+      final suggestions = (response['suggestions'] as List<dynamic>?) ?? [];
+
+      if (suggestions.isNotEmpty) {
+        String formattedSuggestions = suggestions.map((s) {
+          return '**${s['foodName']}**\n*Lý do:* ${s['reason']}\n*Giá:* ${s['priceRange']}\n';
+        }).join('\n---\n');
+
+        final botMessage = ChatMessage(text: formattedSuggestions, sender: MessageSender.bot);
+        _replaceLastMessage(botMessage);
+      } else {
+        _replaceLastMessage(ChatMessage(text: 'Rất tiếc, tôi không tìm thấy gợi ý nào phù hợp.', sender: MessageSender.bot));
+      }
+    } catch (e) {
+      _handleError(e);
+    }
+  }
+
+  void _addMessageToState(ChatMessage message) {
+    final currentState = state;
+    // SỬA LỖI: Khởi tạo với đúng kiểu <ChatMessage>[]
+    final currentMessages = currentState is ChatLoaded ? List<ChatMessage>.from(currentState.messages) : <ChatMessage>[];
+    currentMessages.insert(0, message);
+    emit(ChatLoaded(messages: currentMessages));
+  }
+
+  void _replaceLastMessage(ChatMessage message) {
+    final currentState = state;
+    if (currentState is ChatLoaded) {
+      // SỬA LỖI: Khởi tạo với đúng kiểu List<ChatMessage>.from
+      final currentMessages = List<ChatMessage>.from(currentState.messages);
+      currentMessages.removeAt(0);
+      currentMessages.insert(0, message);
       emit(ChatLoaded(messages: currentMessages));
     }
+  }
+
+  void _handleError(Object e) {
+    final errorMessage = ChatMessage(text: 'Đã có lỗi xảy ra: ${e.toString()}', sender: MessageSender.bot);
+    _replaceLastMessage(errorMessage);
   }
 }

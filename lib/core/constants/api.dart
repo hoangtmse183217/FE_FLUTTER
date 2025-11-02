@@ -70,6 +70,7 @@ class ApiConstants {
   static String postsByRestaurant(int restaurantId) => "/posts/by-restaurant/$restaurantId";
   static String postComments(int postId) => "/posts/$postId/comments";
 
-  /// AI Chat (New)
+  /// AI Chat
   static const String aiChatFood = "/Chat/food";
+  static const String aiSuggestByMood = "/Chat/suggest-by-mood";
 }

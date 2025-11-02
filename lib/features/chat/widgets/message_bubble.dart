@@ -26,7 +26,6 @@ class MessageBubble extends StatelessWidget {
             bottomRight: Radius.circular(16),
           );
 
-    // SỬA LỖI: Tạo style sheet cho markdown để đảm bảo màu chữ đúng
     final markdownStyleSheet = MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
       p: Theme.of(context).textTheme.bodyMedium?.copyWith(
         color: textColor,
@@ -36,12 +35,12 @@ class MessageBubble extends StatelessWidget {
         color: textColor,
         fontSize: 16,
       ),
-       h1: Theme.of(context).textTheme.bodyMedium?.copyWith(
+      h1: Theme.of(context).textTheme.bodyMedium?.copyWith(
         color: textColor,
         fontSize: 16,
         fontWeight: FontWeight.bold
       ),
-       h2: Theme.of(context).textTheme.bodyMedium?.copyWith(
+      h2: Theme.of(context).textTheme.bodyMedium?.copyWith(
         color: textColor,
         fontSize: 16,
         fontWeight: FontWeight.bold
@@ -58,11 +57,10 @@ class MessageBubble extends StatelessWidget {
           color: bubbleColor,
           borderRadius: borderRadius,
         ),
-        // SỬA LỖI: Dùng MarkdownBody thay cho Text để hiển thị định dạng
         child: MarkdownBody(
           data: message.text,
           styleSheet: markdownStyleSheet,
-          selectable: true, // Cho phép người dùng copy text
+          selectable: true,
         ),
       ),
     );
