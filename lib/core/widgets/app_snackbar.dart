@@ -1,45 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
-import 'package:mumiappfood/core/constants/colors.dart';
-
-// Enum để định nghĩa các loại SnackBar
-enum SnackBarType { success, error, info }
+import 'package:mumiappfood/core/constants/colors.dart'; // Giả sử bạn có file này
 
 class AppSnackbar {
-  static void show(
-      BuildContext context, {
-        required String message,
-        SnackBarType type = SnackBarType.info,
-      }) {
-    // Ẩn SnackBar hiện tại nếu có
+  static void show(BuildContext context, String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
-    // Lấy màu sắc và icon dựa trên loại SnackBar
-    Color backgroundColor;
-    IconData iconData;
-
-    switch (type) {
-      case SnackBarType.success:
-        backgroundColor = AppColors.success; // Sử dụng màu từ AppColors
-        iconData = Icons.check_circle_outline;
-        break;
-      case SnackBarType.error:
-        backgroundColor = AppColors.error; // Sử dụng màu từ AppColors
-        iconData = Icons.highlight_off;
-        break;
-      case SnackBarType.info:
-      default:
-        backgroundColor = Colors.blueGrey.shade700;
-        iconData = Icons.info_outline;
-        break;
-    }
-
-    // Tạo SnackBar với thiết kế mới
     final snackBar = SnackBar(
-      // Nội dung tùy chỉnh với Row
+      // NỘI DUNG: Row chứa Icon và Text
       content: Row(
         children: [
-          Icon(iconData, color: Colors.white),
+          Icon(
+            isError ? Icons.error_outline : Icons.check_circle_outline,
+            color: Colors.white,
+            size: 24,
+          ),
           hSpaceM,
           Expanded(
             child: Text(
@@ -49,37 +24,27 @@ class AppSnackbar {
           ),
         ],
       ),
-      backgroundColor: backgroundColor,
-      behavior: SnackBarBehavior.floating, // Quan trọng để có thể tùy chỉnh margin
+      // GIAO DIỆN: Bo góc, đổ bóng và nổi
+      backgroundColor: isError ? AppColors.error : AppColors.success,
+      behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      margin: const EdgeInsets.symmetric(
-        vertical: kSpacingM,
-        horizontal: kSpacingM,
-      ),
-      padding: const EdgeInsets.symmetric(
-        vertical: 12,
-        horizontal: kSpacingM,
-      ),
+      margin: const EdgeInsets.all(16),
+      elevation: 6.0,
       duration: const Duration(seconds: 3),
     );
 
-    // Hiển thị SnackBar
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-  // --- Các hàm helper để gọi dễ dàng hơn ---
-
+  // Hàm helper cho thông báo thành công
   static void showSuccess(BuildContext context, String message) {
-    show(context, message: message, type: SnackBarType.success);
+    show(context, message);
   }
 
+  // Hàm helper cho thông báo lỗi
   static void showError(BuildContext context, String message) {
-    show(context, message: message, type: SnackBarType.error);
-  }
-
-  static void showInfo(BuildContext context, String message) {
-    show(context, message: message, type: SnackBarType.info);
+    show(context, message, isError: true);
   }
 }

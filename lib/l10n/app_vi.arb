@@ -9,6 +9,7 @@
   "phoneNumber": "Số điện thoại",
   "address": "Địa chỉ",
   "gender": "Giới tính",
+  "changePassword": "Đổi mật khẩu",
   "notUpdated": "Chưa cập nhật",
   "noEmail": "Không có email",
   "unknownState": "Trạng thái không xác định",

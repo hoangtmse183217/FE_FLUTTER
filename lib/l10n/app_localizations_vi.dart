@@ -36,6 +36,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get gender => 'Giới tính';
 
   @override
+  String get changePassword => 'Đổi mật khẩu';
+
+  @override
   String get notUpdated => 'Chưa cập nhật';
 
   @override

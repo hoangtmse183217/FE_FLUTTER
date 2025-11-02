@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:mumiappfood/core/constants/api.dart';
 import 'package:mumiappfood/core/services/auth_service.dart';
+import 'package:image_picker/image_picker.dart';
 
-// Lớp Exception tùy chỉnh cho các lỗi liên quan đến Profile
 class ProfileException implements Exception {
   final String message;
   ProfileException(this.message);
@@ -14,78 +15,139 @@ class ProfileException implements Exception {
 }
 
 class ProfileApiProvider {
-  /// Lấy thông tin chi tiết của người dùng đang đăng nhập
+
   Future<Map<String, dynamic>> getMyProfile() async {
     final accessToken = await AuthService.getValidAccessToken();
+
     if (accessToken == null) {
-      throw ProfileException('Chưa đăng nhập hoặc phiên đã hết hạn.');
+      throw ProfileException('Token is null. User not logged in or session expired.');
     }
 
-    final uri = Uri.parse(ApiConstants.baseUrl + '/profile/me');
+    final uri = Uri.parse('${ApiConstants.baseUrl}${ApiConstants.myProfile}');
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $accessToken',
+    };
 
     try {
-      final response = await http.get(
-        uri,
-        headers: { 'Authorization': 'Bearer $accessToken' },
-      ).timeout(const Duration(seconds: 10));
+      if (kDebugMode) {
+        print('--- DEBUG PROFILE_API_PROVIDER ---');
+        print('URL GỌI: $uri');
+        print('HEADERS GỬI ĐI: $headers');
+      }
+
+      final response = await http.get(uri, headers: headers);
+
+      if (kDebugMode) {
+        print('STATUS CODE: ${response.statusCode}');
+        print('RAW BODY: ${response.body}');
+        print('--- END DEBUG ---');
+      }
+      
+      if (response.body.isEmpty) {
+        throw ProfileException('Response body is empty (Status Code: ${response.statusCode}).');
+      }
 
       final responseData = jsonDecode(response.body);
 
-      // Sửa lại: Kiểm tra 'success' thay vì 'isSuccess'
-      if (response.statusCode == 200 && responseData['success'] == true) {
-        // Trả về dữ liệu thành công, kể cả khi profile là null
-        return responseData['data'] as Map<String, dynamic>;
+      if (response.statusCode == 200) {
+        final data = responseData['data'] ?? responseData['profile'] ?? responseData;
+        if (data is Map<String, dynamic>) {
+          return data;
+        } else {
+           throw ProfileException('Data format is not a valid Map.');
+        }
       } else {
-        // Nếu API trả về lỗi (statusCode != 200 hoặc success == false)
-        final errorMessage = responseData['message'] ?? responseData['errors']?.first ?? 'Không thể tải hồ sơ.';
-        throw ProfileException(errorMessage);
+        final msg = responseData['message'] ?? responseData['error'] ?? 'Failed to load profile.';
+        throw ProfileException(msg);
       }
     } on SocketException {
-      throw ProfileException('Không có kết nối mạng. Vui lòng kiểm tra lại.');
+      throw ProfileException('No Internet connection.');
     } on TimeoutException {
-      throw ProfileException('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
+      throw ProfileException('Connection to server timed out.');
+    } on FormatException {
+       throw ProfileException('Failed to parse server response. Check RAW BODY log.');
     } catch (e) {
-      // Ném lại các lỗi đã được xử lý (ProfileException) hoặc các lỗi không mong muốn khác
       rethrow;
     }
   }
-
-  /// Cập nhật thông tin hồ sơ
+  
   Future<Map<String, dynamic>> updateMyProfile(Map<String, dynamic> profileData) async {
     final accessToken = await AuthService.getValidAccessToken();
-    if (accessToken == null) {
-      throw ProfileException('Chưa đăng nhập hoặc phiên đã hết hạn.');
-    }
+    if (accessToken == null) throw ProfileException('Token is null.');
 
-    final uri = Uri.parse(ApiConstants.baseUrl + '/profile/me');
+    final uri = Uri.parse('${ApiConstants.baseUrl}${ApiConstants.myProfile}');
+    final headers = {
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken',
+    };
+    
     try {
-      final response = await http.put(
-        uri,
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $accessToken',
-        },
-        body: jsonEncode(profileData),
-      ).timeout(const Duration(seconds: 10));
-
+      final response = await http.put(uri, headers: headers, body: jsonEncode(profileData));
       final responseData = jsonDecode(response.body);
-
-      // Sửa lại: Kiểm tra 'success' thay vì 'isSuccess'
-      if (response.statusCode == 200 && responseData['success'] == true) {
-        return responseData['data'] as Map<String, dynamic>;
+      if (response.statusCode == 200) {
+        return responseData['data'] ?? responseData;
       } else {
-        final errorMessage = responseData['message'] ?? responseData['errors']?.first ?? 'Cập nhật hồ sơ thất bại.';
-        throw ProfileException(errorMessage);
+        throw ProfileException(responseData['message'] ?? 'Update failed.');
       }
+    } catch (e) { rethrow; }
+  }
+
+  Future<String> uploadAvatar(XFile imageFile) async {
+    final accessToken = await AuthService.getValidAccessToken();
+    if (accessToken == null) throw ProfileException('Token is null.');
+
+    var request = http.MultipartRequest('POST', Uri.parse('${ApiConstants.baseUrl}${ApiConstants.uploadAvatar}'));
+    request.headers['Authorization'] = 'Bearer $accessToken';
+    request.files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+
+    try {
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+      var responseData = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return responseData['data']['avatarUrl'];
+      } else {
+        throw ProfileException(responseData['message'] ?? 'Upload failed.');
+      }
+    } catch (e) { rethrow; }
+  }
+
+  // HÀM ĐƯỢC SỬA LẠI
+  Future<Map<String, dynamic>> getUserDetails(int userId) async {
+    final accessToken = await AuthService.getValidAccessToken();
+    if (accessToken == null) throw ProfileException('Token is null.');
+
+    final uri = Uri.parse('${ApiConstants.baseUrl}${ApiConstants.userProfile(userId)}');
+    final headers = {'Authorization': 'Bearer $accessToken'};
+
+    try {
+      final response = await http.get(uri, headers: headers);
+
+      // BƯỚC 1: KIỂM TRA STATUS CODE TRƯỚC TIÊN
+      if (response.statusCode != 200) {
+        // Nếu không phải 200, ném lỗi với thông tin hữu ích
+        throw ProfileException('Failed to load user details for ID $userId. Status code: ${response.statusCode}');
+      }
+
+      // BƯỚC 2: KIỂM TRA BODY RỖNG
+      if (response.body.isEmpty) {
+        throw ProfileException('Response body is empty for user ID $userId.');
+      }
+      
+      // BƯỚC 3: DECODE MỘT CÁCH AN TOÀN
+      final responseData = jsonDecode(response.body);
+      return responseData['data'] ?? responseData;
+
     } on SocketException {
-      throw ProfileException('Không có kết nối mạng.');
+      throw ProfileException('No Internet connection.');
     } on TimeoutException {
-      throw ProfileException('Không thể kết nối đến máy chủ.');
+      throw ProfileException('Connection to server timed out.');
+    } on FormatException {
+       throw ProfileException('Failed to parse server response. Check RAW BODY log.');
     } catch (e) {
+      // Ném lại các lỗi khác (ví dụ: ProfileException đã được ném ở trên)
       rethrow;
     }
   }
-
-// TODO: Thêm hàm uploadAvatar khi cần
-// Future<String> uploadAvatar(XFile imageFile) async { ... }
 }

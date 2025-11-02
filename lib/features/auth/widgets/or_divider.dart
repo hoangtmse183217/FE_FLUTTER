@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
+import 'package:mumiappfood/core/constants/colors.dart';
 
 class OrDivider extends StatelessWidget {
   const OrDivider({super.key});
@@ -10,15 +11,15 @@ class OrDivider extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: kSpacingL),
       child: Row(
         children: [
-          const Expanded(child: Divider()),
+          const Expanded(child: Divider(color: AppColors.border, thickness: 1)),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: kSpacingS),
+            padding: const EdgeInsets.symmetric(horizontal: kSpacingM), // Tăng khoảng cách
             child: Text(
-              'hoặc tiếp tục với',
-              style: Theme.of(context).textTheme.bodyMedium,
+              'hoặc',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w500),
             ),
           ),
-          const Expanded(child: Divider()),
+          const Expanded(child: Divider(color: AppColors.border, thickness: 1)),
         ],
       ),
     );

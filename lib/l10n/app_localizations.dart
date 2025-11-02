@@ -154,6 +154,12 @@ abstract class AppLocalizations {
   /// **'Giới tính'**
   String get gender;
 
+  /// No description provided for @changePassword.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đổi mật khẩu'**
+  String get changePassword;
+
   /// No description provided for @notUpdated.
   ///
   /// In vi, this message translates to:

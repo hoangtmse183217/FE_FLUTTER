@@ -1,44 +1,42 @@
 import 'package:bloc/bloc.dart';
-import 'package:flutter/foundation.dart';
-
-part 'restaurant_details_state.dart';
-
-// Dữ liệu giả cho một nhà hàng
-final Map<String, dynamic> _mockRestaurantData = {
-  'id': '123',
-  'name': 'The Deck Saigon',
-  'description': 'Một nhà hàng ven sông lãng mạn với không gian mở và tầm nhìn tuyệt đẹp. Chuyên phục vụ các món ăn Âu - Á kết hợp, là địa điểm lý tưởng cho các buổi hẹn hò và dịp đặc biệt.',
-  'address': '38 Nguyễn Ư Dĩ, Thảo Điền, Quận 2, TP.HCM',
-  'rating': 4.7,
-  'priceRange': '₫₫₫ (300k - 700k)',
-  'cuisine': 'Món Âu & Việt',
-  'images': [
-    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500',
-    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500',
-    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500',
-  ],
-  'latitude': 10.8016,
-  'longitude': 106.7383,
-};
+import 'package:mumiappfood/features/post/data/models/post_model.dart';
+import 'package:mumiappfood/features/post/data/repositories/post_repository.dart';
+import 'package:mumiappfood/features/restaurant/data/models/restaurant_model.dart';
+import 'package:mumiappfood/features/restaurant/data/repositories/restaurant_repository.dart';
+import 'restaurant_details_state.dart';
 
 class RestaurantDetailsCubit extends Cubit<RestaurantDetailsState> {
-  RestaurantDetailsCubit() : super(RestaurantDetailsInitial());
+  final RestaurantRepository _restaurantRepository;
+  final PostRepository _postRepository;
+
+  RestaurantDetailsCubit({
+    RestaurantRepository? restaurantRepository,
+    PostRepository? postRepository,
+  })
+      : _restaurantRepository = restaurantRepository ?? RestaurantRepository(),
+        _postRepository = postRepository ?? PostRepository(),
+        super(RestaurantDetailsInitial());
 
   Future<void> fetchRestaurantDetails(String restaurantId) async {
+    if (state is RestaurantDetailsLoading) return;
     emit(RestaurantDetailsLoading());
-    // Giả lập cuộc gọi API dựa trên restaurantId
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final id = int.tryParse(restaurantId);
+      if (id == null) {
+        throw const FormatException('ID của nhà hàng không hợp lệ.');
+      }
 
-    // Logic thực tế:
-    // try {
-    //   final data = await firestore.collection('restaurants').doc(restaurantId).get();
-    //   if (data.exists) {
-    //     emit(RestaurantDetailsLoaded(restaurantData: data.data()!));
-    //   } else {
-    //     emit(RestaurantDetailsError(message: 'Không tìm thấy nhà hàng.'));
-    //   }
-    // } catch (e) { ... }
+      final results = await Future.wait([
+        _restaurantRepository.getRestaurantDetails(id),
+        _postRepository.getPostsByRestaurant(restaurantId: id, page: 1, pageSize: 10),
+      ]);
 
-    emit(RestaurantDetailsLoaded(restaurantData: _mockRestaurantData));
+      final restaurant = results[0] as Restaurant;
+      final posts = (results[1] as Map<String, dynamic>)['items'] as List<Post>;
+
+      emit(RestaurantDetailsLoaded(restaurant: restaurant, posts: posts));
+    } catch (e) {
+      emit(RestaurantDetailsError(message: e.toString()));
+    }
   }
 }

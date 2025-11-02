@@ -52,7 +52,22 @@ class AuthRepository {
 
   /// Đăng xuất người dùng
   Future<void> logout() async {
-    await AuthService.clearTokens();
+    // SỬA LỖI: Gọi API logout trước khi xóa token local
+    final accessToken = await AuthService.getAccessToken();
+    try {
+      if (accessToken != null) {
+        // Gọi API để vô hiệu hóa token trên server.
+        // Không cần await vì chúng ta muốn logout ở client ngay cả khi mạng lỗi.
+        _apiProvider.logoutUser(accessToken: accessToken);
+      }
+    } catch (e) {
+      // Bỏ qua lỗi khi gọi API logout, nhưng ghi lại để debug
+      print('Error during API logout, proceeding with client-side logout: $e');
+    } finally {
+      // Luôn đảm bảo rằng token ở client được xóa và đăng xuất khỏi Google.
+      await _googleSignIn.signOut();
+      await AuthService.clearTokens();
+    }
   }
 
   /// Yêu cầu đặt lại mật khẩu
@@ -70,4 +85,27 @@ class AuthRepository {
     return _apiProvider.resetPassword(email: email, token: token, otp: otp, newPassword: newPassword);
   }
 
+  /// Đăng ký đối tác
+  Future<Map<String, dynamic>> registerPartner({
+    required String fullname,
+    required String email,
+    required String password,
+  }) {
+    return _apiProvider.registerPartner(
+      fullname: fullname,
+      email: email,
+      password: password,
+    );
+  }
+
+  /// Đổi mật khẩu
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) {
+    return _apiProvider.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+  }
 }

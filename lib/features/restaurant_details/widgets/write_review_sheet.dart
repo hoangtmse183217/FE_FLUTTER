@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
 import 'package:mumiappfood/core/widgets/app_button.dart';
+import 'package:mumiappfood/core/widgets/app_snackbar.dart';
+
+import '../../../core/widgets/app_textfield.dart';
 
 class WriteReviewSheet extends StatefulWidget {
   const WriteReviewSheet({super.key});
@@ -15,7 +18,8 @@ class _WriteReviewSheetState extends State<WriteReviewSheet> {
 
   void _submitReview() {
     if (_rating == 0.0) {
-      // TODO: Hiển thị SnackBar yêu cầu chọn rating
+      // SỬA ĐỔI: Sử dụng chuỗi cứng tiếng Việt
+      AppSnackbar.showError(context, 'Vui lòng chọn số sao đánh giá.');
       return;
     }
     final reviewData = {
@@ -33,15 +37,17 @@ class _WriteReviewSheetState extends State<WriteReviewSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+      padding: EdgeInsets.fromLTRB(kSpacingM, kSpacingM, kSpacingM, MediaQuery.of(context).viewInsets.bottom + kSpacingL),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Bạn đánh giá nhà hàng này thế nào?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          // SỬA ĐỔI: Sử dụng chuỗi cứng tiếng Việt
+          Text('Bạn đánh giá nhà hàng này thế nào?', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
           vSpaceM,
-          // --- Phần chọn sao ---
           Center(
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -57,25 +63,24 @@ class _WriteReviewSheetState extends State<WriteReviewSheet> {
                     color: Colors.amber,
                     size: 40,
                   ),
+                  splashRadius: 20,
                 );
               }),
             ),
           ),
-          vSpaceM,
-          // --- Phần nhập bình luận ---
-          TextField(
+          vSpaceL,
+          AppTextField(
             controller: _commentController,
-            decoration: const InputDecoration(
-              hintText: 'Chia sẻ cảm nhận của bạn về đồ ăn, không gian, phục vụ...',
-              labelText: 'Bình luận (Tùy chọn)',
-              border: OutlineInputBorder(),
-            ),
+            // SỬA ĐỔI: Sử dụng chuỗi cứng tiếng Việt
+            hintText: 'Chia sẻ cảm nhận của bạn về đồ ăn, không gian, phục vụ...',
+            labelText: 'Bình luận (Tùy chọn)',
             maxLines: 4,
           ),
           vSpaceL,
           SizedBox(
             width: double.infinity,
             child: AppButton(
+              // SỬA ĐỔI: Sử dụng chuỗi cứng tiếng Việt
               text: 'Gửi đánh giá',
               onPressed: _submitReview,
             ),

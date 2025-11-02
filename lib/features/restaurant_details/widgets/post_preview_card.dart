@@ -1,35 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
-
-import '../../../routes/app_router.dart';
+import 'package:mumiappfood/routes/app_router.dart';
 
 class PostPreviewCard extends StatelessWidget {
   final String title;
   final String coverImageUrl;
   final String author; // Tên nhà hàng
   final DateTime createdAt;
-  final VoidCallback onTap;
   final String postId;
 
+  // SỬA LỖI: Xóa tham số onTap không được sử dụng
   const PostPreviewCard({
     super.key,
     required this.title,
     required this.coverImageUrl,
     required this.author,
     required this.createdAt,
-    required this.onTap,
     required this.postId,
   });
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    // SỬA LỖI: Sử dụng DateFormat để định dạng ngày tháng
+    final formattedDate = DateFormat.yMd('vi_VN').format(createdAt);
+
     return InkWell(
       onTap: () {
-        context.pushNamed(
-          AppRouteNames.postDetails,
-          pathParameters: {'postId': postId},
-        );
+        if (postId.isNotEmpty) {
+          context.pushNamed(
+            AppRouteNames.postDetails,
+            pathParameters: {'postId': postId},
+          );
+        }
       },
       borderRadius: BorderRadius.circular(12),
       child: SizedBox(
@@ -45,10 +50,19 @@ class PostPreviewCard extends StatelessWidget {
                 height: 150,
                 width: double.infinity,
                 fit: BoxFit.cover,
+                // SỬA LỖI: Thêm loadingBuilder để cải thiện UX
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    height: 150,
+                    color: Colors.grey[300],
+                    child: const Center(child: CircularProgressIndicator()),
+                  );
+                },
                 errorBuilder: (c, e, s) => Container(
                   height: 150,
                   color: Colors.grey[300],
-                  child: const Icon(Icons.broken_image),
+                  child: const Icon(Icons.broken_image, color: Colors.grey, size: 40),
                 ),
               ),
             ),
@@ -56,15 +70,17 @@ class PostPreviewCard extends StatelessWidget {
             // Tiêu đề
             Text(
               title,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              // SỬA LỖI: Sử dụng TextTheme để nhất quán
+              style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             vSpaceXS,
             // Tác giả và ngày đăng
+            // TODO: Use AppLocalizations for 'By' and date format
             Text(
-              'Bởi ${author} • ${createdAt.day}/${createdAt.month}/${createdAt.year}',
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              'Bởi $author • $formattedDate',
+              style: textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
             ),
           ],
         ),

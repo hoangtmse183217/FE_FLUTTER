@@ -1,15 +1,18 @@
 import 'package:bloc/bloc.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:mumiappfood/core/services/auth_service.dart';
 import 'package:mumiappfood/core/utils/logger.dart';
+import 'package:mumiappfood/features/auth/data/providers/auth_api_provider.dart';
+import 'package:mumiappfood/features/auth/data/repositories/auth_repository.dart';
 
 part 'owner_register_state.dart';
 
 class OwnerRegisterCubit extends Cubit<OwnerRegisterState> {
   OwnerRegisterCubit() : super(OwnerRegisterInitial());
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthRepository _authRepository = AuthRepository();
 
+  /// Hàm đăng ký Owner
   Future<void> register({
     required String fullName,
     required String email,
@@ -17,37 +20,33 @@ class OwnerRegisterCubit extends Cubit<OwnerRegisterState> {
   }) async {
     if (isClosed) return;
     emit(OwnerRegisterLoading());
-
     try {
-      final UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+      // 1. Gọi hàm registerPartner từ Repository
+      final data = await _authRepository.registerPartner(
+        fullname: fullName,
         email: email,
         password: password,
       );
 
-      final User? user = userCredential.user;
-      if (user == null) throw Exception("...");
+      final user = data['user'] as Map<String, dynamic>;
+      final accessToken = data['accessToken'] as String;
+      final refreshToken = data['refreshToken'] as String;
+      
+      // SỬA LỖI: Sử dụng hàm saveTokens duy nhất để thông báo cho GoRouter
+      await AuthService.saveTokens(accessToken, refreshToken);
 
-      // Đảm bảo hành động này hoàn tất
-      await user.updateDisplayName('[OWNER] ' + fullName);
-      await _auth.signOut();
-      AppLogger.success('Đăng ký tài khoản Owner thành công: ${user.email}');
+      AppLogger.success('Đăng ký và đăng nhập Owner thành công: ${user['email']}');
+      
       if (isClosed) return;
       emit(OwnerRegisterSuccess());
 
-    } on FirebaseAuthException catch (e) {
-      String message = 'Đã có lỗi xảy ra.';
-      if (e.code == 'weak-password') message = 'Mật khẩu quá yếu.';
-      if (e.code == 'email-already-in-use') message = 'Email này đã được sử dụng.';
-
-      // 3. KIỂM TRA LẠI TRƯỚC KHI EMIT
+    } on RegistrationException catch (e) {
       if (isClosed) return;
-      emit(OwnerRegisterFailure(message: message));
-
+      AppLogger.error('Lỗi đăng ký Owner API: ${e.message}');
+      emit(OwnerRegisterFailure(message: e.message));
     } catch (e) {
-      AppLogger.error('Lỗi không xác định khi đăng ký Owner: $e');
-
-      // 4. KIỂM TRA LẠI TRƯỚC KHI EMIT
       if (isClosed) return;
+      AppLogger.error('Lỗi không xác định khi đăng ký Owner: $e');
       emit(OwnerRegisterFailure(message: 'Đã có lỗi xảy ra. Vui lòng thử lại.'));
     }
   }

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
-import 'package:mumiappfood/core/constants/colors.dart';
 import 'package:mumiappfood/core/widgets/app_snackbar.dart';
 import 'package:mumiappfood/features/auth/state/owner/owner_login_cubit.dart';
-import 'package:mumiappfood/features/auth/widgets/owner/owner_login_form.dart';
+import 'package:mumiappfood/features/auth/widgets/auth_form_container.dart';
+import 'package:mumiappfood/features/auth/widgets/auth_header.dart';
+import 'package:mumiappfood/features/auth/widgets/login_form.dart';
 import 'package:mumiappfood/routes/app_router.dart';
 
 class OwnerLoginPage extends StatelessWidget {
@@ -15,129 +15,65 @@ class OwnerLoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => OwnerLoginCubit(),
+      create: (context) => OwnerLoginCubit(),
       child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: BlocListener<OwnerLoginCubit, OwnerLoginState>(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () => context.goNamed(AppRouteNames.roleSelection),
+          ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+        body: BlocConsumer<OwnerLoginCubit, OwnerLoginState>(
           listener: (context, state) {
-            if (state is OwnerLoginFailure) {
+            if (state is OwnerLoginSuccess) {
+              context.goNamed(AppRouteNames.ownerDashboard);
+              AppSnackbar.showSuccess(context, 'Đăng nhập thành công!');
+            } else if (state is OwnerLoginFailure) {
               AppSnackbar.showError(context, state.message);
             }
           },
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 🔙 Nút quay lại trang chọn role
-                Padding(
-                  padding: const EdgeInsets.only(left: 4, top: 4),
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: AppColors.primary,
+          builder: (context, state) {
+            final isLoading = state is OwnerLoginLoading;
+            return Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: kSpacingL),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const AuthHeader(
+                      icon: Icons.storefront_outlined,
+                      title: 'Tài khoản Đối tác',
+                      subtitle: 'Quản lý nhà hàng và thực đơn của bạn.',
                     ),
-                    onPressed: () =>
-                        context.goNamed(AppRouteNames.roleSelection),
-                    tooltip: 'Quay lại chọn vai trò',
-                  ),
-                ),
-
-                // 🧱 Nội dung chính
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: kSpacingL,
-                      vertical: kSpacingL,
+                    vSpaceXL,
+                    AuthFormContainer(
+                      child: LoginForm(
+                        isLoading: isLoading,
+                        onSubmit: (email, password) {
+                          // SỬA LỖI: Thêm tên cho tham số
+                          context.read<OwnerLoginCubit>().login(email: email, password: password);
+                        },
+                        // Không có onGoogleLogin cho owner
+                      ),
                     ),
-                    child: Column(
+                    vSpaceL,
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // 🏪 Logo hoặc Icon đặc trưng cho đối tác
-                        SvgPicture.asset(
-                          'assets/images/branding/logo.svg',
-                          width: 110,
-                          colorFilter: const ColorFilter.mode(
-                            AppColors.primary,
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                        vSpaceL,
-
-                        // Tiêu đề chính
-                        Text(
-                          'Đăng nhập Đối tác',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.textPrimary,
-                              ),
-                        ),
-                        vSpaceS,
-                        Text(
-                          'Quản lý nhà hàng, thực đơn và đơn hàng của bạn.',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                                color:
-                                    AppColors.textSecondary.withOpacity(0.85),
-                                height: 1.4,
-                              ),
-                        ),
-                        vSpaceXL,
-
-                        // 🧩 Card chứa form đăng nhập
-                        Container(
-                          padding: const EdgeInsets.all(kSpacingL),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: const OwnerLoginForm(),
-                        ),
-
-                        vSpaceL,
-
-                        // 🔗 Chưa có tài khoản?
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Chưa có tài khoản?',
-                              style: TextStyle(
-                                color: AppColors.textSecondary.withOpacity(0.9),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () =>
-                                  context.goNamed(AppRouteNames.ownerRegister),
-                              child: const Text(
-                                'Đăng ký ngay',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ),
-                          ],
+                        const Text("Chưa có tài khoản đối tác?"),
+                        TextButton(
+                          onPressed: () => context.goNamed(AppRouteNames.ownerRegister),
+                          child: const Text('Đăng ký ngay'),
                         ),
                       ],
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+                  ],
+                ), 
+              ),
+            );
+          },
         ),
       ),
     );
