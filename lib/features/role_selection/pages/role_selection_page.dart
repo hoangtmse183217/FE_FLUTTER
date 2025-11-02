@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
-import 'package:mumiappfood/features/role_selection/widgets/role_card.dart';
 import 'package:mumiappfood/routes/app_router.dart';
-
 import '../../../core/constants/colors.dart';
 
 class RoleSelectionPage extends StatelessWidget {
@@ -12,65 +10,86 @@ class RoleSelectionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: kSpacingL),
+          padding: const EdgeInsets.all(kSpacingL),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch, 
             children: [
-              // --- Logo ---
+              const Spacer(flex: 2),
+              // --- THAY ĐỔI: Xóa colorFilter để giữ màu gốc của logo ---
               SvgPicture.asset(
                 'assets/images/branding/logo.svg',
-                height: 90,
-                colorFilter: const ColorFilter.mode(
-                  AppColors.primary,
-                  BlendMode.srcIn,
-                ),
+                height: 100, 
               ),
-              vSpaceL,
+              vSpaceXL,
 
-              // --- Lời chào ---
               Text(
-                'Chào mừng đến với MumiAppFood!',
+                'Chào mừng bạn!',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
+                style: textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
               ),
               vSpaceS,
               Text(
-                'Vui lòng chọn vai trò để tiếp tục',
+                'Bắt đầu hành trình ẩm thực của bạn với vai trò là...',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.textSecondary.withOpacity(0.8),
+                style: textTheme.bodyLarge?.copyWith(
+                  color: AppColors.textSecondary,
                 ),
               ),
-              vSpaceXL,
-              vSpaceM,
-
-              // --- Vai trò Thực khách ---
-              RoleCard(
+              const Spacer(flex: 1),
+              
+              // --- THAY ĐỔI: Cả hai nút giờ đều là ElevatedButton ---
+              _buildRoleButton(
+                context: context,
                 icon: Icons.restaurant_menu_outlined,
-                title: 'Tôi là Thực khách',
-                subtitle: 'Khám phá, đánh giá và đặt bàn dễ dàng.',
-                onTap: () => context.goNamed(AppRouteNames.login),
+                label: 'THỰC KHÁCH',
+                onPressed: () => context.goNamed(AppRouteNames.login),
               ),
-              vSpaceL,
-
-              // --- Vai trò Đối tác ---
-              RoleCard(
+              vSpaceM,
+              _buildRoleButton(
+                context: context,
                 icon: Icons.storefront_outlined,
-                title: 'Tôi là Đối tác',
-                subtitle: 'Quản lý nhà hàng, món ăn và phản hồi khách hàng.',
-                onTap: () => context.goNamed(AppRouteNames.ownerLogin),
+                label: 'ĐỐI TÁC NHÀ HÀNG',
+                onPressed: () => context.goNamed(AppRouteNames.ownerLogin),
               ),
+              const Spacer(flex: 3),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildRoleButton({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    // Style chung cho cả hai nút
+    final buttonStyle = ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: kSpacingM),
+            textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          );
+
+    final content = Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: 22),
+        hSpaceM,
+        Text(label),
+      ],
+    );
+
+    return ElevatedButton(onPressed: onPressed, style: buttonStyle, child: content);
   }
 }

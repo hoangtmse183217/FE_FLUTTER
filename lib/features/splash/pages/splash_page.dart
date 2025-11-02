@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mumiappfood/core/constants/app_spacing.dart';
 import 'package:mumiappfood/features/splash/state/splash_cubit.dart';
-import 'package:mumiappfood/features/splash/widgets/animated_splash_logo.dart';
-
 
 class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
@@ -13,17 +12,39 @@ class SplashPage extends StatelessWidget {
     return BlocProvider(
       create: (context) => SplashCubit()..initializeApp(),
       child: BlocListener<SplashCubit, SplashState>(
-        // Lắng nghe trạng thái thay đổi để điều hướng
         listener: (context, state) {
           if (state is SplashLoaded) {
-            // Sử dụng go_router để thay thế stack màn hình hiện tại
-            // bằng màn hình mới, tránh việc người dùng có thể back lại splash.
             context.go(state.destinationRoute);
           }
         },
-        child: const Scaffold(
-          body: Center(
-            child: AnimatedSplashLogo(),
+        child: Scaffold(
+          body: Container(
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
+                // Logo của ứng dụng
+                Image.asset(
+                  'assets/images/branding/logo.png', // SỬA ĐỔI: Sử dụng đường dẫn chính xác
+                  width: 120,
+                  height: 120,
+                ),
+                vSpaceM,
+                // Tên ứng dụng
+                Text(
+                  'MumiAppFood',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                ),
+                const Spacer(),
+                // Chỉ báo tải
+                const CircularProgressIndicator(),
+                const SizedBox(height: kSpacingXL * 2), // Tạo khoảng đệm dưới
+              ],
+            ),
           ),
         ),
       ),

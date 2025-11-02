@@ -8,4 +8,15 @@ class ThemeCubit extends Cubit<ThemeState> {
   void setTheme(AppThemeOptions appTheme) {
     emit(ThemeState(appTheme));
   }
+
+  /// Toggles the theme between light and dark mode.
+  void toggleTheme() {
+    // This is a simple toggle. If the current theme is dark, switch to light.
+    // Otherwise, switch to dark.
+    if (state.appTheme == AppThemeOptions.dark) {
+      setTheme(AppThemeOptions.light);
+    } else {
+      setTheme(AppThemeOptions.dark);
+    }
+  }
 }

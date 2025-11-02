@@ -1,80 +1,101 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; // <-- 1. Import GoRouter
+import 'package:go_router/go_router.dart';
+import 'package:mumiappfood/routes/app_router.dart';
 
-class RestaurantHeader extends StatelessWidget {
-  final String name;
-  final String cuisine;
-  final double rating;
+class RestaurantHeader extends StatefulWidget {
+  // BẮT BUỘC: Thêm restaurantId
+  final int restaurantId;
   final List<String> images;
 
   const RestaurantHeader({
     super.key,
-    required this.name,
-    required this.cuisine,
-    required this.rating,
+    required this.restaurantId,
     required this.images,
   });
 
   @override
+  State<RestaurantHeader> createState() => _RestaurantHeaderState();
+}
+
+class _RestaurantHeaderState extends State<RestaurantHeader> {
+  int _currentPage = 0;
+
+  // BẮT BUỘC: Sửa lại hàm để truyền tham số
+  void _openPhotoView(BuildContext context, String imageUrl, String heroTag) {
+    context.pushNamed(
+      AppRouteNames.photoView,
+      pathParameters: {
+        'restaurantId': widget.restaurantId.toString(),
+      },
+      extra: {'imageUrl': imageUrl, 'heroTag': heroTag},
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Stack(
-      clipBehavior: Clip.none,
+      fit: StackFit.expand,
       children: [
-        // Carousel hình ảnh
-        SizedBox(
-          height: 250,
-          child: PageView.builder(
-            itemCount: images.length,
-            itemBuilder: (context, index) {
-              return Image.network(images[index], fit: BoxFit.cover);
-            },
-          ),
-        ),
-        // Nút back
-        Positioned(
-          top: 40, // Hoặc MediaQuery.of(context).padding.top để an toàn hơn
-          left: 16,
-          child: CircleAvatar(
-            backgroundColor: Colors.black.withOpacity(0.5),
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              // 2. SỬA LẠI HÀNH ĐỘNG onPressed
-              onPressed: () => context.pop(),
-            ),
-          ),
-        ),
-        // Thẻ thông tin
-        Positioned(
-          bottom: -50,
-          left: 16,
-          right: 16,
-          child: Card(
-            elevation: 8,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.star, color: Colors.amber[700], size: 20),
-                      const SizedBox(width: 4),
-                      Text(rating.toString(), style: const TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 8),
-                      Text('•', style: TextStyle(color: Colors.grey[600])),
-                      const SizedBox(width: 8),
-                      Text(cuisine, style: TextStyle(color: Colors.grey[600])),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+        _buildImageCarousel(context),
+        if (widget.images.length > 1) _buildPageIndicator(),
       ],
+    );
+  }
+
+  Widget _buildImageCarousel(BuildContext context) {
+    return widget.images.isEmpty
+        ? Container(
+            color: Colors.grey[300],
+            child: const Icon(Icons.image_not_supported, color: Colors.grey, size: 50),
+          )
+        : PageView.builder(
+            itemCount: widget.images.length,
+            onPageChanged: (value) => setState(() => _currentPage = value),
+            itemBuilder: (context, index) {
+              final imageUrl = widget.images[index];
+              final heroTag = 'restaurant_image_$imageUrl';
+
+              return GestureDetector(
+                onTap: () => _openPhotoView(context, imageUrl, heroTag),
+                child: Hero(
+                  tag: heroTag,
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Colors.black54],
+                        stops: [0.6, 1.0],
+                      ),
+                    ),
+                    child: Image.network(imageUrl, fit: BoxFit.cover),
+                  ),
+                ),
+              );
+            },
+          );
+  }
+
+  Widget _buildPageIndicator() {
+    return Positioned(
+      bottom: 10,
+      left: 0,
+      right: 0,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(widget.images.length, (index) {
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            margin: const EdgeInsets.symmetric(horizontal: 4.0),
+            height: 8.0,
+            width: _currentPage == index ? 24.0 : 8.0,
+            decoration: BoxDecoration(
+              color: _currentPage == index ? Colors.white : Colors.white.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+          );
+        }),
+      ),
     );
   }
 }

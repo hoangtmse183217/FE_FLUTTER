@@ -75,7 +75,7 @@ class _EditPhoneNumberDialogState extends State<EditPhoneNumberDialog> {
             if (value == null || value.trim().isEmpty) {
               return localizations.phoneNumberCannotBeEmpty;
             }
-            if (value.length < 10) {
+            if (value.length < 10 || value.length > 10) {
               return localizations.invalidPhoneNumber;
             }
             return null;

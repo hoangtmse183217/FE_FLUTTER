@@ -1,156 +1,203 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
-import 'package:mumiappfood/core/widgets/app_snackbar.dart';
+import 'package:mumiappfood/core/widgets/app_error_widget.dart';
+import 'package:mumiappfood/features/home/state/home_cubit.dart';
+import 'package:mumiappfood/features/home/state/home_state.dart';
+import 'package:mumiappfood/features/home/widgets/home/restaurant_card.dart';
+import 'package:mumiappfood/features/home/widgets/home/restaurant_horizontal_list.dart';
+import 'package:mumiappfood/features/home/widgets/home/section_header.dart';
+import 'package:mumiappfood/features/post/data/models/post_model.dart';
+import 'package:mumiappfood/features/post/widgets/post_card.dart';
+import 'package:mumiappfood/routes/app_router.dart';
 
-import '../../../l10n/app_localizations.dart';
-import '../../../routes/app_router.dart';
-import '../widgets/home/location_display.dart';
-import '../widgets/home/location_selection_sheet.dart';
-import '../widgets/home/mood_selector.dart';
-import '../widgets/home/restaurant_card.dart';
-import '../widgets/home/section_header.dart';
-
-class HomeView extends StatefulWidget {
+class HomeView extends StatelessWidget {
   const HomeView({super.key});
-  @override
-  State<HomeView> createState() => _HomeViewState();
-}
-
-class _HomeViewState extends State<HomeView> {
-  String? _currentLocation;
-
-  @override
-  void initState() {
-    super.initState();
-    // Tự động lấy vị trí lần đầu tiên khi trang được tạo
-    _fetchCurrentAddress(showError: false);
-  }
-
-  Future<void> _fetchCurrentAddress({bool showError = true}) async {
-    final localizations = AppLocalizations.of(context)!;
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        if (showError && mounted) AppSnackbar.showError(context, localizations.locationServicesOff);
-        return;
-      }
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          if (showError && mounted) AppSnackbar.showError(context, localizations.locationPermissionDenied);
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        if (showError && mounted) AppSnackbar.showError(context, localizations.locationPermissionPermanentlyDenied);
-        return;
-      }
-
-      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.medium);
-      if (!mounted) return;
-
-      List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
-      if (placemarks.isNotEmpty) {
-        Placemark place = placemarks[0];
-        final addressComponents = [place.street, place.subLocality, place.subAdministrativeArea, place.administrativeArea];
-        final fullAddress = addressComponents.where((c) => c != null && c.isNotEmpty).join(', ');
-        if (mounted) {
-          setState(() { _currentLocation = fullAddress; });
-        }
-      }
-    } catch (e) {
-      if (showError && mounted) AppSnackbar.showError(context, localizations.cannotGetLocation);
-    }
-  }
-
-  void _showLocationPicker() async {
-    final localizations = AppLocalizations.of(context)!;
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (BuildContext context) {
-        return LocationSelectionSheet(
-          currentAddress: _currentLocation,
-          onRefreshLocation: _fetchCurrentAddress,
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
-    final userName = FirebaseAuth.instance.currentUser?.displayName ?? localizations.user;
+    return BlocProvider(
+      // Cung cấp HomeCubit và gọi fetch dữ liệu ngay khi màn hình được tạo
+      create: (context) => HomeCubit()..fetchAllHomeData(),
+      child: Scaffold(
+        // Sử dụng một BlocBuilder duy nhất để quản lý toàn bộ UI
+        body: BlocBuilder<HomeCubit, HomeState>(
+          builder: (context, state) {
+            return RefreshIndicator(
+              onRefresh: () => context.read<HomeCubit>().fetchAllHomeData(),
+              child: CustomScrollView(
+                slivers: [
+                  _buildAppBar(context),
+                  const SliverToBoxAdapter(child: _AiChatBanner()),
+                  
+                  // --- MỤC NHÀ HÀNG GẦN BẠN ---
+                  _buildSectionHeader(context, title: 'Nhà hàng gần bạn'),
+                  _buildNearbySection(context, state),
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.only(left: kSpacingM),
-          child: LocationDisplay(
-            location: _currentLocation ?? localizations.selectYourLocation,
-            onTap: _showLocationPicker,
-          ),
-        ),
-        leadingWidth: 250,
-        title: const Text(''),
-        elevation: 0.5,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        actions: [
-          IconButton(
-            onPressed: () => context.pushNamed(AppRouteNames.notifications),
-            icon: const Icon(Icons.notifications_none_outlined, size: 28),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(kSpacingM),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              localizations.helloUser(userName),
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
+                  // --- MỤC BÀI VIẾT MỚI ---
+                  _buildSectionHeader(context, title: 'Có gì mới?', onSeeAll: () => context.pushNamed(AppRouteNames.postFeed)),
+                  _buildPostsSection(context, state),
+
+                  // --- MỤC NHÀ HÀNG CHO BẠN ---
+                  _buildSectionHeader(context, title: 'Nhà hàng cho bạn'),
+                  _buildRecommendedSection(context, state),
+                ],
               ),
-            ),
-            vSpaceS,
-            Text(
-              localizations.howAreYouFeelingToday,
-              style: const TextStyle(fontSize: 18, color: Colors.grey),
-            ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  SliverAppBar _buildAppBar(BuildContext context) {
+    return SliverAppBar(
+      pinned: true,
+      floating: false,
+      elevation: 0.5,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      title: const Text('Trang chủ', style: TextStyle(fontWeight: FontWeight.bold)),
+      actions: [
+        // SỬA LỖI: Sử dụng đúng tên route là `discover`
+        IconButton(onPressed: () => context.pushNamed(AppRouteNames.discover), icon: const Icon(Icons.search, size: 28)),
+        IconButton(onPressed: () => context.pushNamed(AppRouteNames.notifications), icon: const Icon(Icons.notifications_none_outlined, size: 28)),
+        hSpaceS,
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, {required String title, VoidCallback? onSeeAll}) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(kSpacingM, kSpacingL, kSpacingM, kSpacingS),
+        child: SectionHeader(title: title, onSeeAll: onSeeAll),
+      ),
+    );
+  }
+
+  // --- CÁC SECTIONS ĐƯỢC BUILD DỰA TRÊN STATE ---
+
+  Widget _buildNearbySection(BuildContext context, HomeState state) {
+    // Trường hợp cần quyền hoặc GPS bị tắt
+    if (state.locationPermissionStatus == LocationPermissionStatus.denied ||
+        state.locationPermissionStatus == LocationPermissionStatus.deniedForever ||
+        state.locationPermissionStatus == LocationPermissionStatus.serviceDisabled) {
+      return SliverToBoxAdapter(
+        child: _PermissionRequestCard(
+          message: state.nearbyErrorMessage ?? 'Vui lòng cấp quyền truy cập vị trí và bật GPS để tìm nhà hàng gần bạn.',
+          onPressed: () => context.read<HomeCubit>().fetchNearbyWithPermissionCheck(),
+        ),
+      );
+    }
+
+    // Các trường hợp khác (loading, success, failure)
+    return RestaurantHorizontalList(
+      status: state.nearbyStatus,
+      restaurants: state.nearbyRestaurants,
+      errorMessage: state.nearbyErrorMessage,
+      onRetry: () => context.read<HomeCubit>().fetchNearbyWithPermissionCheck(),
+    );
+  }
+
+  Widget _buildPostsSection(BuildContext context, HomeState state) {
+    if (state.postsStatus == HomeSectionStatus.loading) {
+      return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
+    }
+    if (state.postsStatus == HomeSectionStatus.failure) {
+      return SliverToBoxAdapter(child: AppErrorWidget(message: state.postsErrorMessage ?? '', onRetry: () => context.read<HomeCubit>().fetchRecommendedAndPosts()));
+    }
+    if (state.posts.isEmpty) {
+      return const SliverToBoxAdapter(child: Center(child: Padding(padding: EdgeInsets.all(16.0), child: Text('Chưa có bài viết nào.'))));
+    }
+    return SliverToBoxAdapter(
+      child: SizedBox(
+        height: 350,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: state.posts.length,
+          padding: const EdgeInsets.symmetric(horizontal: kSpacingM),
+          itemBuilder: (context, index) {
+            return SizedBox(width: MediaQuery.of(context).size.width * 0.8, child: PostCard(post: state.posts[index]));
+          },
+          separatorBuilder: (context, index) => hSpaceM,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecommendedSection(BuildContext context, HomeState state) {
+    if (state.recommendedStatus == HomeSectionStatus.loading) {
+      return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
+    }
+    if (state.recommendedStatus == HomeSectionStatus.failure) {
+      return SliverToBoxAdapter(child: AppErrorWidget(message: state.recommendedErrorMessage ?? '', onRetry: () => context.read<HomeCubit>().fetchRecommendedAndPosts()));
+    }
+    if (state.recommendedRestaurants.isEmpty) {
+      return const SliverToBoxAdapter(child: Center(child: Text('Không có nhà hàng nào để hiển thị.')));
+    }
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(kSpacingM, 0, kSpacingM, kSpacingM),
+      sliver: SliverList.separated(
+        itemCount: state.recommendedRestaurants.length,
+        separatorBuilder: (context, index) => vSpaceM,
+        itemBuilder: (context, index) => RestaurantCard(restaurant: state.recommendedRestaurants[index]),
+      ),
+    );
+  }
+}
+
+// --- WIDGETS HỖ TRỢ ---
+
+class _AiChatBanner extends StatelessWidget {
+  const _AiChatBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(kSpacingM, kSpacingS, kSpacingM, kSpacingL),
+      child: InkWell(
+        onTap: () => context.pushNamed(AppRouteNames.aiChat),
+        borderRadius: BorderRadius.circular(50),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: kSpacingM, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(50),
+            color: Theme.of(context).scaffoldBackgroundColor,
+            border: Border.all(color: Colors.grey.shade300),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5, offset: const Offset(0, 2))],
+          ),
+          child: Row(children: [
+            const Icon(Icons.psychology_alt_outlined, color: Colors.deepPurpleAccent),
+            hSpaceM,
+            Expanded(child: Text('Hỏi trợ lý AI về ẩm thực...', style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade600))),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+class _PermissionRequestCard extends StatelessWidget {
+  final String message;
+  final VoidCallback onPressed;
+  const _PermissionRequestCard({required this.message, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: kSpacingM),
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.1),
+      child: Padding(
+        padding: const EdgeInsets.all(kSpacingL),
+        child: Column(
+          children: [
+            const Icon(Icons.location_on_outlined, size: 40, color: Colors.grey),
             vSpaceM,
-            const MoodSelector(),
-            vSpaceL,
-            SectionHeader(title: localizations.featuredSuggestions, onSeeAll: () {
-              // TODO: Điều hướng sang trang Khám phá
-            }),
+            Text(message, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w500)),
             vSpaceM,
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: 2, // Dữ liệu giả
-              separatorBuilder: (context, index) => vSpaceM,
-              itemBuilder: (context, index) {
-                return RestaurantCard(
-                  restaurantId: 'home-suggestion-${index + 1}',
-                  name: index == 0 ? 'Cuc Gach Quan' : 'Pizza 4P\'s',
-                  imageUrl: index == 0
-                      ? 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=500'
-                      : 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500',
-                  cuisine: index == 0 ? localizations.vietnameseCuisine : localizations.pizzaAndPasta,
-                  rating: index == 0 ? 4.8 : 4.9,
-                  moods: index == 0 ? [localizations.family, localizations.relaxing] : [localizations.family, localizations.romantic],
-                );
-              },
-            ),
+            ElevatedButton(onPressed: onPressed, child: const Text('Bật GPS & Thử lại')),
           ],
         ),
       ),

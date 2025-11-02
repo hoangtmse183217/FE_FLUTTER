@@ -11,8 +11,20 @@ import 'package:mumiappfood/features/auth/widgets/social_login_button.dart';
 import '../../../core/constants/colors.dart';
 import '../../../routes/app_router.dart';
 
+typedef OnLoginSubmit = void Function(String email, String password);
+
 class LoginForm extends StatefulWidget {
-  const LoginForm({super.key});
+  // SỬA LỖI: Thêm các callback
+  final OnLoginSubmit onSubmit;
+  final VoidCallback? onGoogleLogin;
+  final bool isLoading;
+
+  const LoginForm({
+    super.key,
+    required this.onSubmit,
+    this.onGoogleLogin,
+    this.isLoading = false,
+  });
 
   @override
   State<LoginForm> createState() => _LoginFormState();
@@ -30,93 +42,87 @@ class _LoginFormState extends State<LoginForm> {
     super.dispose();
   }
 
-  void _submitLogin() {
+  void _submit() {
     if (_formKey.currentState!.validate()) {
-      context.read<LoginCubit>().login(
-            email: _emailController.text.trim(),
-            password: _passwordController.text.trim(),
-          );
+      widget.onSubmit(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<LoginCubit, LoginState>(
-      builder: (context, state) {
-        final isLoading = state is LoginLoading;
-
-        return Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              // --- EMAIL ---
-              AppTextField(
-                controller: _emailController,
-                labelText: 'Email',
-                hintText: 'Nhập email của bạn',
-                prefixIcon: Icons.email_outlined,
-                validator: ValidatorUtils.email,
-              ),
-              vSpaceM,
-
-              // --- PASSWORD ---
-              AppTextField(
-                controller: _passwordController,
-                labelText: 'Mật khẩu',
-                hintText: 'Nhập mật khẩu của bạn',
-                prefixIcon: Icons.lock_outline,
-                isPassword: true,
-                validator: ValidatorUtils.password,
-              ),
-
-              // --- FORGOT PASSWORD ---
-              Padding(
-                padding: const EdgeInsets.only(top: kSpacingS),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    // 🔗 Forgot password
-                    TextButton(
-                      onPressed: isLoading
-                          ? null
-                          : () => context.goNamed(AppRouteNames.forgotPassword),
-                      child: const Text(
-                        'Quên mật khẩu?',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              vSpaceM,
-
-              // --- PRIMARY BUTTON ---
-              SizedBox(
-                width: double.infinity,
-                child: AppButton(
-                  text: 'Đăng nhập',
-                  isLoading: isLoading,
-                  onPressed: _submitLogin,
-                ),
-              ),
-
-              // --- SOCIAL LOGIN ---
-              const OrDivider(),
-              SocialLoginButton(
-                iconPath: 'assets/images/icon/google.svg',
-                text: 'Đăng nhập với Google',
-                onPressed: isLoading
-                    ? () {}
-                    : () => context.read<LoginCubit>().loginWithGoogle(),
-              ),
-            ],
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          // --- EMAIL ---
+          AppTextField(
+            controller: _emailController,
+            labelText: 'Email',
+            hintText: 'Nhập email của bạn',
+            prefixIcon: Icons.email_outlined,
+            validator: ValidatorUtils.email,
+            enabled: !widget.isLoading,
           ),
-        );
-      },
+          vSpaceM,
+
+          // --- PASSWORD ---
+          AppTextField(
+            controller: _passwordController,
+            labelText: 'Mật khẩu',
+            hintText: 'Nhập mật khẩu của bạn',
+            prefixIcon: Icons.lock_outline,
+            isPassword: true,
+            validator: ValidatorUtils.password,
+            enabled: !widget.isLoading,
+          ),
+
+          // --- FORGOT PASSWORD ---
+          Padding(
+            padding: const EdgeInsets.only(top: kSpacingS),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: widget.isLoading
+                      ? null
+                      : () => context.goNamed(AppRouteNames.forgotPassword),
+                  child: const Text(
+                    'Quên mật khẩu?',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          vSpaceM,
+
+          // --- PRIMARY BUTTON ---
+          SizedBox(
+            width: double.infinity,
+            child: AppButton(
+              text: 'Đăng nhập',
+              isLoading: widget.isLoading,
+              onPressed: _submit,
+            ),
+          ),
+
+          // --- SOCIAL LOGIN (Optional) ---
+          if (widget.onGoogleLogin != null) ...[
+            const OrDivider(),
+            SocialLoginButton(
+              iconPath: 'assets/images/icon/google.svg',
+              onPressed: widget.isLoading ? () {} : widget.onGoogleLogin!,
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

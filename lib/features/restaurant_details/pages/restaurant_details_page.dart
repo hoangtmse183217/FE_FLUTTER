@@ -1,165 +1,224 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
+import 'package:mumiappfood/core/services/auth_service.dart';
 import 'package:mumiappfood/core/widgets/app_snackbar.dart';
-import 'package:mumiappfood/features/home/state/favorites_cubit.dart';
+import 'package:mumiappfood/features/favorites/state/favorites_cubit.dart';
+import 'package:mumiappfood/features/restaurant/data/models/restaurant_model.dart';
 import 'package:mumiappfood/features/restaurant_details/state/restaurant_details_cubit.dart';
+import 'package:mumiappfood/features/restaurant_details/state/restaurant_details_state.dart';
+import 'package:mumiappfood/features/restaurant_details/widgets/edit_review_sheet.dart';
 import 'package:mumiappfood/features/restaurant_details/widgets/restaurant_header.dart';
 import 'package:mumiappfood/features/restaurant_details/widgets/restaurant_info_section.dart';
 import 'package:mumiappfood/features/restaurant_details/widgets/restaurant_map_section.dart';
 import 'package:mumiappfood/features/restaurant_details/widgets/restaurant_posts_section.dart';
-import 'package:mumiappfood/features/restaurant_details/widgets/user_review_section.dart'; // <-- 1. Import
+import 'package:mumiappfood/features/restaurant_details/widgets/user_review_section.dart';
 import 'package:mumiappfood/features/restaurant_details/widgets/write_review_sheet.dart';
+import 'package:mumiappfood/features/review/data/repositories/review_repository.dart';
+import 'package:mumiappfood/features/review/state/review_cubit.dart';
+import 'package:mumiappfood/features/review/state/review_state.dart';
 
-import '../../../core/constants/colors.dart'; // <-- 1. Import
+import '../../../core/constants/colors.dart';
+import '../../../features/review/data/models/review_model.dart';
 
 class RestaurantDetailsPage extends StatelessWidget {
   final String restaurantId;
 
   const RestaurantDetailsPage({super.key, required this.restaurantId});
 
-  // --- HÀM MỚI ĐỂ XỬ LÝ VIỆC HIỂN THỊ BOTTOM SHEET ---
-  void _showWriteReviewSheet(BuildContext context) async {
+  void _showWriteReviewSheet(BuildContext context, int currentRestaurantId) async {
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => const WriteReviewSheet(),
     );
 
-    // Xử lý kết quả trả về từ BottomSheet
     if (result != null && context.mounted) {
-      // TODO: Gọi Cubit để gửi review lên server
-      // context.read<RestaurantDetailsCubit>().submitReview(
-      //   rating: result['rating'],
-      //   comment: result['comment'],
-      // );
-      print('Review to be submitted: $result');
-      AppSnackbar.showSuccess(context, 'Cảm ơn bạn đã gửi đánh giá!');
+      final double rating = result['rating'] ?? 0.0;
+      final String comment = result['comment'] ?? '';
+      context.read<ReviewCubit>().submitReview(
+            restaurantId: currentRestaurantId,
+            rating: rating,
+            comment: comment,
+          );
+    }
+  }
+
+  void _showEditReviewSheet(BuildContext context, Review reviewToEdit) async {
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => EditReviewSheet(reviewToEdit: reviewToEdit),
+    );
+
+    if (result != null && context.mounted) {
+      final double rating = result['rating'] ?? 0.0;
+      final String comment = result['comment'] ?? '';
+      context.read<ReviewCubit>().updateReview(
+            reviewId: reviewToEdit.id,
+            rating: rating,
+            comment: comment,
+            restaurantId: reviewToEdit.restaurantId,
+          );
+    }
+  }
+
+  void _confirmDeleteReview(BuildContext context, Review reviewToDelete) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xác nhận xóa'),
+        content: const Text('Bạn có chắc chắn muốn xóa đánh giá này không? Hành động này không thể hoàn tác.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Hủy')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text('Xóa', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      context.read<ReviewCubit>().deleteReview(reviewToDelete.id, reviewToDelete.restaurantId);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => RestaurantDetailsCubit()..fetchRestaurantDetails(restaurantId),
-      child: Scaffold(
-        floatingActionButton: BlocBuilder<FavoritesCubit, FavoritesState>(
-          builder: (context, state) {
-            bool isFavorite = false;
-            if (state is FavoritesLoaded) {
-              isFavorite = state.favoriteIds.contains(restaurantId);
-            }
-            return FloatingActionButton(
-              onPressed: () {
-                context.read<FavoritesCubit>().toggleFavorite(restaurantId);
-              },
-              backgroundColor: isFavorite ? Colors.redAccent : Theme.of(context).primaryColor,
-              elevation: 4,
-              child: Icon(
-                isFavorite ? Icons.favorite : Icons.favorite_border,
-                color: Colors.white,
-              ),
-            );
-          },
+    final int parsedRestaurantId = int.tryParse(restaurantId) ?? 0;
+
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => RestaurantDetailsCubit()..fetchRestaurantDetails(restaurantId),
         ),
-        body: BlocBuilder<RestaurantDetailsCubit, RestaurantDetailsState>(
-          builder: (context, state) {
-            if (state is RestaurantDetailsLoading || state is RestaurantDetailsInitial) {
-              return const Center(child: CircularProgressIndicator(color: AppColors.primary));
-            }
+        BlocProvider(
+          // SỬA LỖI TRIỆT ĐỂ: Xóa bỏ AuthCubit không tồn tại
+          create: (context) => ReviewCubit(ReviewRepository())..fetchReviews(parsedRestaurantId),
+        ),
+      ],
+      child: DefaultTabController(
+        length: 3,
+        child: Scaffold(
+          floatingActionButton: BlocBuilder<RestaurantDetailsCubit, RestaurantDetailsState>(
+            builder: (context, detailsState) {
+              final canFavorite = detailsState is RestaurantDetailsLoaded;
+              final Restaurant? restaurant = canFavorite ? detailsState.restaurant : null;
 
-            if (state is RestaurantDetailsError) {
-              return Center(child: Text(state.message));
-            }
+              return BlocBuilder<FavoritesCubit, FavoritesState>(
+                builder: (context, favoritesState) {
+                  final isFavorite = favoritesState.favoriteIds.contains(parsedRestaurantId);
 
-            if (state is RestaurantDetailsLoaded) {
-              final data = state.restaurantData;
-              // Dữ liệu giả, sau này sẽ được lấy từ API/Cubit
-              final postsData = [
-                {
-                  'id': 'post1',
-                  'title': 'Khám phá thực đơn mùa thu mới của chúng tôi',
-                  'coverImageUrl': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500',
-                  'createdAt': DateTime.now().subtract(const Duration(days: 3)),
+                  return FloatingActionButton(
+                    onPressed: canFavorite ? () => context.read<FavoritesCubit>().toggleFavorite(parsedRestaurantId, restaurant: restaurant) : null,
+                    backgroundColor: canFavorite ? (isFavorite ? Colors.redAccent : Theme.of(context).primaryColor) : Colors.grey,
+                    elevation: 4,
+                    child: Icon(isFavorite ? Icons.favorite : Icons.favorite_border, color: Colors.white),
+                  );
                 },
-                {
-                  'id': 'post2',
-                  'title': 'Đêm nhạc Acoustic thứ Bảy hàng tuần',
-                  'coverImageUrl': 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=500',
-                  'createdAt': DateTime.now().subtract(const Duration(days: 7)),
+              );
+            },
+          ),
+          body: FutureBuilder<int?>(
+            future: AuthService.getCurrentUserId(),
+            builder: (context, userSnapshot) {
+              final currentUserId = userSnapshot.data;
+
+              return BlocListener<ReviewCubit, ReviewState>(
+                listener: (context, state) {
+                  if (state is ReviewSubmitSuccess || state is ReviewUpdateSuccess) {
+                    AppSnackbar.showSuccess(context, 'Thao tác thành công!');
+                  } else if (state is ReviewError || state is ReviewSubmitError || state is ReviewUpdateError) {
+                    final errorMessage = state is ReviewError
+                        ? state.message
+                        : state is ReviewSubmitError
+                            ? state.message
+                            : (state as ReviewUpdateError).message;
+                    AppSnackbar.showError(context, errorMessage);
+                  }
                 },
-                {
-                  'id': 'post2',
-                  'title': 'Đêm nhạc Acoustic thứ Bảy hàng tuần',
-                  'coverImageUrl': 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=500',
-                  'createdAt': DateTime.now().subtract(const Duration(days: 7)),
-                }
-              ];
-              final reviewsData = [
-                { 'userName': 'Văn A', 'userAvatarUrl': null, 'rating': 5.0, 'comment': 'Tuyệt vời!', 'createdAt': DateTime.now() },
-                { 'userName': 'Văn A', 'userAvatarUrl': null, 'rating': 5.0, 'comment': 'Tuyệt vời!', 'createdAt': DateTime.now() },
-                { 'userName': 'Văn A', 'userAvatarUrl': null, 'rating': 5.0, 'comment': 'Tuyệt vời!', 'createdAt': DateTime.now() },
-                { 'userName': 'Văn A', 'userAvatarUrl': null, 'rating': 5.0, 'comment': 'Tuyệt vời!', 'createdAt': DateTime.now() },
-              ];
-
-              return SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // --- Header ---
-                    RestaurantHeader(
-                      name: data['name'],
-                      cuisine: data['cuisine'],
-                      rating: data['rating'],
-                      images: List<String>.from(data['images']),
-                    ),
-                    const SizedBox(height: 66),
-
-                    // --- Thông tin chi tiết ---
-                    RestaurantInfoSection(
-                      description: data['description'],
-                      address: data['address'],
-                      priceRange: data['priceRange'],
-                    ),
-                    const Divider(height: kSpacingXL),
-
-                    // --- Bản đồ ---
-                    RestaurantMapSection(
-                      latitude: data['latitude'],
-                      longitude: data['longitude'],
-                      restaurantName: data['name'],
-                    ),
-                    const Divider(height: kSpacingXL),
-
-                    // --- Bài viết ---
-                    RestaurantPostsSection(
-                      posts: postsData,
-                      restaurantName: data['name'],
-                    ),
-                    const Divider(height: kSpacingXL),
-
-                    // --- 2. THÊM SECTION ĐÁNH GIÁ ---
-                    UserReviewSection(
-                      averageRating: data['rating'],
-                      totalReviews: reviewsData.length,
-                      reviews: reviewsData,
-                      onWriteReview: () => _showWriteReviewSheet(context),
-                    ),
-
-                    vSpaceXL,
-                    // Khoảng trống ở dưới cùng
-                    const SizedBox(height: 80),
-                  ],
+                child: BlocBuilder<RestaurantDetailsCubit, RestaurantDetailsState>(
+                  builder: (context, detailsState) {
+                    if (detailsState is RestaurantDetailsLoading || detailsState is RestaurantDetailsInitial) {
+                      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+                    }
+                    if (detailsState is RestaurantDetailsError) {
+                      return Center(child: Text(detailsState.message));
+                    }
+                    if (detailsState is RestaurantDetailsLoaded) {
+                      final restaurant = detailsState.restaurant;
+                      return NestedScrollView(
+                        headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                          SliverAppBar(
+                            expandedHeight: 280.0,
+                            floating: false,
+                            pinned: true,
+                            elevation: 2,
+                            flexibleSpace: FlexibleSpaceBar(
+                              background: RestaurantHeader(restaurantId: restaurant.id, images: restaurant.images.map((e) => e.imageUrl).toList()),
+                            ),
+                          ),
+                          SliverPersistentHeader(
+                            delegate: _SliverAppBarDelegate(
+                              TabBar(
+                                tabs: const [Tab(text: 'Tổng quan'), Tab(text: 'Bài viết'), Tab(text: 'Đánh giá')],
+                              ),
+                            ),
+                            pinned: true,
+                          ),
+                        ],
+                        body: TabBarView(
+                          children: [
+                            RestaurantInfoSection(
+                              description: restaurant.description, 
+                              address: restaurant.address, 
+                              priceRange: restaurant.avgPrice,
+                            ),
+                            RestaurantPostsSection(posts: detailsState.posts, restaurantName: restaurant.name),
+                            BlocBuilder<ReviewCubit, ReviewState>(
+                              builder: (context, reviewState) {
+                                if (reviewState is ReviewsLoaded) {
+                                  return UserReviewSection(
+                                    currentUserId: currentUserId,
+                                    averageRating: restaurant.rating,
+                                    totalReviews: reviewState.reviews.length,
+                                    reviews: reviewState.reviews,
+                                    onWriteReview: () => _showWriteReviewSheet(context, restaurant.id),
+                                    onEditReview: (review) => _showEditReviewSheet(context, review),
+                                    onDeleteReview: (review) => _confirmDeleteReview(context, review),
+                                  );
+                                }
+                                return const Center(child: CircularProgressIndicator());
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
                 ),
               );
-            }
-            return const SizedBox.shrink();
-          },
+            },
+          ),
         ),
       ),
     );
   }
+}
+
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar _tabBar;
+  _SliverAppBarDelegate(this._tabBar);
+  @override
+  double get minExtent => _tabBar.preferredSize.height;
+  @override
+  double get maxExtent => _tabBar.preferredSize.height;
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(color: Theme.of(context).scaffoldBackgroundColor, child: _tabBar);
+  }
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) => false;
 }

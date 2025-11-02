@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
 import 'package:mumiappfood/core/constants/colors.dart';
 import 'package:mumiappfood/core/utils/validator_utils.dart';
 import 'package:mumiappfood/core/widgets/app_button.dart';
 import 'package:mumiappfood/core/widgets/app_textfield.dart';
 import 'package:mumiappfood/features/auth/state/owner/owner_login_cubit.dart';
+import 'package:mumiappfood/routes/app_router.dart';
 
 class OwnerLoginForm extends StatefulWidget {
   const OwnerLoginForm({super.key});
@@ -68,13 +70,14 @@ class _OwnerLoginFormState extends State<OwnerLoginForm> {
 
               // --- FORGOT PASSWORD ---
               Padding(
-                padding: const EdgeInsets.only(top: 6.0),
+                padding: const EdgeInsets.only(top: kSpacingS),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    // 🔗 Forgot password
                     TextButton(
-                      onPressed: isLoading ? null : () {},
+                      onPressed: isLoading
+                          ? null
+                          : () => context.goNamed(AppRouteNames.ownerForgotPassword), // <-- ĐÃ SỬA
                       child: const Text(
                         'Quên mật khẩu?',
                         style: TextStyle(

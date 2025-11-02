@@ -9,6 +9,7 @@
   "phoneNumber": "Phone Number",
   "address": "Address",
   "gender": "Gender",
+  "changePassword": "Change Password",
   "notUpdated": "Not updated",
   "noEmail": "No email",
   "unknownState": "Unknown state",

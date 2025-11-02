@@ -20,11 +20,16 @@ class RestaurantImagesPage extends StatelessWidget {
         body: BlocConsumer<RestaurantImagesCubit, RestaurantImagesState>(
           listener: (context, state) {
             if (state is RestaurantImagesError) {
-              AppSnackbar.showError(context, state.message);
+              // Hiển thị SnackBar lỗi mà không build lại cả trang
+              // nhưng chỉ khi lỗi đó không phải là lỗi tạm thời khi hoàn tác
+              if (context.read<RestaurantImagesCubit>().state is! RestaurantImagesLoaded) {
+                AppSnackbar.showError(context, state.message);
+              }
             }
           },
+          buildWhen: (previous, current) => current is! RestaurantImagesError, // Không build lại UI khi có lỗi
           builder: (context, state) {
-            if (state is RestaurantImagesLoading) {
+            if (state is RestaurantImagesLoading || state is RestaurantImagesInitial) {
               return const Center(child: CircularProgressIndicator());
             }
 
@@ -36,7 +41,8 @@ class RestaurantImagesPage extends StatelessWidget {
                   crossAxisSpacing: kSpacingM,
                   mainAxisSpacing: kSpacingM,
                 ),
-                itemCount: state.imageUrls.length + 1, // +1 cho nút thêm ảnh
+                // --- SỬA LỖI 1 ---
+                itemCount: state.imagesData.length + 1, // Dùng 'imagesData'
                 itemBuilder: (context, index) {
                   // Nút "Thêm ảnh"
                   if (index == 0) {
@@ -67,13 +73,17 @@ class RestaurantImagesPage extends StatelessWidget {
                   }
 
                   // Các ảnh hiện có
-                  final imageUrl = state.imageUrls[index - 1];
+                  // --- SỬA LỖI 1 ---
+                  final image = state.imagesData[index - 1]; // Dùng 'imagesData'
+                  final imageUrl = image['imageUrl'] as String;
+                  final imageId = image['id'] as String; // Lấy ID của ảnh
+
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        Image.network(imageUrl, fit: BoxFit.cover),
+                        Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (c, e, s) => Container(color: Colors.grey[200])),
                         Positioned(
                           top: 4,
                           right: 4,
@@ -83,7 +93,9 @@ class RestaurantImagesPage extends StatelessWidget {
                             child: IconButton(
                               icon: const Icon(Icons.delete_outline, color: Colors.white, size: 16),
                               onPressed: () {
-                                // TODO: Gọi cubit.deleteImage(imageUrl)
+                                // --- SỬA LỖI 2 ---
+                                // Truyền 'imageId' (là String) vào hàm deleteImage
+                                context.read<RestaurantImagesCubit>().deleteImage(imageId);
                               },
                             ),
                           ),
@@ -94,7 +106,8 @@ class RestaurantImagesPage extends StatelessWidget {
                 },
               );
             }
-            return const SizedBox.shrink();
+            // Fallback cho các state không xác định hoặc lỗi đã được listener xử lý
+            return const Center(child: Text('Đã có lỗi xảy ra.'));
           },
         ),
       ),

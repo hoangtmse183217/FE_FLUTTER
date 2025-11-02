@@ -36,6 +36,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gender => 'Gender';
 
   @override
+  String get changePassword => 'Change Password';
+
+  @override
   String get notUpdated => 'Not updated';
 
   @override

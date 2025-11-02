@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
-import 'package:mumiappfood/features/restaurant_details/widgets/post_preview_card.dart';
+import 'package:mumiappfood/features/post/data/models/post_model.dart';
+import 'package:mumiappfood/features/restaurant_details/widgets/post_card.dart';
 
 class RestaurantPostsSection extends StatelessWidget {
-  // Dữ liệu giả, sẽ được thay thế bằng dữ liệu từ Cubit
-  final List<Map<String, dynamic>> posts;
+  final List<Post> posts;
   final String restaurantName;
 
   const RestaurantPostsSection({
@@ -16,45 +16,25 @@ class RestaurantPostsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (posts.isEmpty) {
-      // Không hiển thị gì nếu không có bài viết
-      return const SizedBox.shrink();
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(kSpacingL),
+          child: Text(
+            'Chưa có bài viết nào về nhà hàng này.',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ),
+      );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: kSpacingM),
-          child: Text(
-            'Câu chuyện & Tin tức',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ),
-        vSpaceM,
-        SizedBox(
-          height: 228,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: kSpacingM),
-            itemCount: posts.length,
-            separatorBuilder: (context, index) => hSpaceM,
-            itemBuilder: (context, index) {
-              final post = posts[index];
-              return PostPreviewCard(
-                postId: post['id'],
-                title: post['title'],
-                coverImageUrl: post['coverImageUrl'],
-                author: restaurantName,
-                createdAt: post['createdAt'],
-                onTap: () {
-                  // TODO: Điều hướng đến trang chi tiết bài viết
-                  // context.pushNamed(AppRouteNames.postDetails, pathParameters: {'postId': post['id']});
-                },
-              );
-            },
-          ),
-        ),
-      ],
+    // SỬA LỖI: Chuyển thành ListView.builder để widget này tự xử lý việc cuộn,
+    // loại bỏ xung đột với NestedScrollView.
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(kSpacingM, kSpacingL, kSpacingM, kSpacingL),
+      itemCount: posts.length,
+      itemBuilder: (context, index) {
+        return PostCard(post: posts[index]);
+      },
     );
   }
 }

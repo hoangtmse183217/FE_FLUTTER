@@ -2,54 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mumiappfood/core/constants/app_spacing.dart';
-import 'package:mumiappfood/features/home/state/favorites_cubit.dart';
+import 'package:mumiappfood/features/favorites/state/favorites_cubit.dart';
+import 'package:mumiappfood/features/restaurant/data/models/restaurant_model.dart';
 import 'package:mumiappfood/routes/app_router.dart';
-import '../../../../l10n/app_localizations.dart';
 
 class RestaurantCard extends StatelessWidget {
-  final String restaurantId;
-  final String name;
-  final String imageUrl;
-  final String cuisine;
-  final double rating;
-  final List<String> moods; // Expecting mood keys, e.g., ['family', 'romantic']
+  final Restaurant restaurant;
 
-  const RestaurantCard({
-    super.key,
-    required this.restaurantId,
-    required this.name,
-    required this.imageUrl,
-    required this.cuisine,
-    required this.rating,
-    required this.moods,
-  });
-
-  String _getLocalizedMood(BuildContext context, String moodKey) {
-    final localizations = AppLocalizations.of(context)!;
-    switch (moodKey) {
-      case 'family':
-        return localizations.family;
-      case 'relaxing':
-        return localizations.relaxing;
-      case 'romantic':
-        return localizations.romantic;
-      case 'lively':
-        return localizations.lively;
-      case 'luxurious':
-        return localizations.luxurious;
-      case 'quick':
-        return localizations.quick;
-      case 'friends':
-        return localizations.friends;
-      default:
-        return moodKey; // Fallback
-    }
-  }
+  const RestaurantCard({super.key, required this.restaurant});
 
   @override
   Widget build(BuildContext context) {
+    final placeholder = Container(
+        height: 150,
+        color: Colors.grey[300],
+        child: const Icon(Icons.storefront, color: Colors.grey, size: 50),
+    );
+
+    final String? imageUrl = restaurant.images.isNotEmpty ? restaurant.images.first.imageUrl : null;
+
     return Card(
       clipBehavior: Clip.antiAlias,
+      margin: const EdgeInsets.symmetric(horizontal: kSpacingM, vertical: kSpacingS),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 4,
       shadowColor: Colors.black.withOpacity(0.1),
@@ -57,7 +31,7 @@ class RestaurantCard extends StatelessWidget {
         onTap: () {
           context.pushNamed(
             AppRouteNames.restaurantDetails,
-            pathParameters: {'restaurantId': restaurantId},
+            pathParameters: {'restaurantId': restaurant.id.toString()},
           );
         },
         child: Column(
@@ -65,32 +39,35 @@ class RestaurantCard extends StatelessWidget {
           children: [
             Stack(
               children: [
-                Image.network(
-                  imageUrl,
-                  height: 150,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (c, e, s) => Container(height: 150, color: Colors.grey[300]),
-                ),
+                (imageUrl != null && imageUrl.isNotEmpty)
+                  ? Image.network(
+                      imageUrl,
+                      height: 150,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (c, e, s) => placeholder, 
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const SizedBox(
+                          height: 150,
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      },
+                    )
+                  : placeholder, 
                 Positioned(
                   top: 8,
                   right: 8,
                   child: BlocBuilder<FavoritesCubit, FavoritesState>(
                     builder: (context, state) {
-                      bool isFavorite = false;
-                      if (state is FavoritesLoaded) {
-                        isFavorite = state.favoriteIds.contains(restaurantId);
-                      }
+                      // SỬA LỖI: Truy cập trực tiếp state.favoriteIds, không cần check `is FavoritesLoaded`
+                      bool isFavorite = state.favoriteIds.contains(restaurant.id);
                       return GestureDetector(
-                        onTap: () {
-                          context.read<FavoritesCubit>().toggleFavorite(restaurantId);
-                        },
+                        // NÂNG CẤP: Truyền cả restaurant object để tối ưu UI
+                        onTap: () => context.read<FavoritesCubit>().toggleFavorite(restaurant.id, restaurant: restaurant),
                         child: Container(
                           padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.5),
-                            shape: BoxShape.circle,
-                          ),
+                          decoration: BoxDecoration(color: Colors.black.withOpacity(0.5), shape: BoxShape.circle),
                           child: Icon(
                             isFavorite ? Icons.favorite : Icons.favorite_border,
                             color: isFavorite ? Colors.redAccent : Colors.white,
@@ -109,7 +86,7 @@ class RestaurantCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    name,
+                    restaurant.name,
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -118,38 +95,37 @@ class RestaurantCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        cuisine,
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      ),
+                      Expanded(child: Text(restaurant.moods.isNotEmpty ? restaurant.moods.join(', ') : restaurant.address, style: TextStyle(fontSize: 14, color: Colors.grey[600]), overflow: TextOverflow.ellipsis)),
                       Row(
                         children: [
                           Icon(Icons.star, size: 16, color: Colors.amber[700]),
                           hSpaceXS,
-                          Text(
-                            rating.toString(),
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
+                          Text(restaurant.rating.toStringAsFixed(1), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ],
                   ),
-                  vSpaceS,
-                  if (moods.isNotEmpty)
-                    Wrap(
-                      spacing: 8.0,
-                      runSpacing: 4.0,
-                      children: moods.map((moodKey) {
-                        final localizedMood = _getLocalizedMood(context, moodKey);
-                        return Chip(
-                          label: Text(localizedMood),
-                          padding: EdgeInsets.zero,
-                          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-                          labelStyle: TextStyle(color: Theme.of(context).primaryColor, fontSize: 12),
-                          side: BorderSide.none,
-                        );
-                      }).toList(),
+                  if (restaurant.moods.isNotEmpty)...[
+                     vSpaceS,
+                     SizedBox(
+                      height: 30,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: restaurant.moods.length,
+                        separatorBuilder: (_, __) => hSpaceS,
+                        itemBuilder: (context, index) {
+                          return Chip(
+                            label: Text(restaurant.moods[index]),
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                            labelStyle: TextStyle(color: Theme.of(context).primaryColor, fontSize: 12),
+                            side: BorderSide.none,
+                            visualDensity: VisualDensity.compact,
+                          );
+                        },
+                      ),
                     ),
+                  ]
                 ],
               ),
             ),

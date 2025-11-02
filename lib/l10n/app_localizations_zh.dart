@@ -36,6 +36,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gender => '性别';
 
   @override
+  String get changePassword => 'Đổi mật khẩu';
+
+  @override
   String get notUpdated => '未更新';
 
   @override
